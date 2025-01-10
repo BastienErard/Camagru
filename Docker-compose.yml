@@ -1,0 +1,57 @@
+version: '3.9'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      args:
+        CONTAINER_PORT_BACK: ${BACKEND_CONTAINER_PORT}
+    ports:
+      - "${BACKEND_PORT}:${BACKEND_CONTAINER_PORT}"
+    env_file:
+      - .env
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - db
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        CONTAINER_PORT_FRONT: ${FRONTEND_CONTAINER_PORT}
+    ports:
+      - "${FRONTEND_PORT}:${FRONTEND_CONTAINER_PORT}"
+    env_file:
+      - .env
+    volumes:
+      - ./frontend:/usr/share/nginx/html
+
+  db:
+    image: mysql:8
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./init-scripts:/docker-entrypoint-initdb.d
+
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    restart: always
+    ports:
+      - "8081:80"
+    environment:
+      PMA_HOST: db
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      APACHE_SERVER_NAME: localhost
+    depends_on:
+      - db
+
+volumes:
+  db_data:

@@ -161,10 +161,8 @@ async function	handleLogin(event)
 
 	try
 	{
-		console.log(password);
 		// Hachage du mot de passe avant envoi
 		const hashedPassword = await hashPassword(password);
-		console.log(hashedPassword);
 
 		const response = await fetch(`${API_URL}/login`, {
 			method: 'POST',
@@ -177,14 +175,17 @@ async function	handleLogin(event)
 
 		const data = await response.json();
 
-		if (response.ok)
+		if (data.success)
 		{
 			authState.isAuthenticated = true;
 			authState.user = data.user;
 			window.location.href = '/';
 		}
 		else
+		{
 			showError('Nom d\'utilisateur et/ou mot de passe incorrect');
+			return;
+		}
 	}
 	catch (error)
 	{

@@ -194,6 +194,104 @@ async function	handleLogin(event)
 	}
 }
 
+// Valide le format des différentes entrées (format, complexité, présence dans les champs,...)
+function	valideRegisterForm(username, email, password, confirmPassword)
+{
+	// Vérifie que tous les champs sont remplis
+	if (!username || !email || !password || !confirmPassword)
+	{
+		showError('Veuillez remplir tous les champs');
+		return false;
+	}
+
+	// Validation du format de l'email
+	const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+	if (!emailRegex.test(email))
+	{
+		showError('Format d\'email invalide');
+		return false;
+	}
+
+	// Validation de la longueur du nom d'utilisateur
+	if (username.length < 3 || username.length > 20)
+	{
+		showError('Le nom d\'utilisateur doit contenir entre 3 et 20 caractères');
+		return false;
+	}
+
+	// Validation du format du nom d'utilisateur
+	const usernameRegex = /^[a-zA-Z0-9_-]{3,20}$/;
+	if (!usernameRegex.test(username))
+	{
+		showError('Le nom d\'utilisateur ne doit contenir que des lettres, chiffres, tirets et underscores');
+		return false;
+	}
+
+	// Validation de la longueur du mot de passe
+	if (password.length < 8 || password.length > 30)
+	{
+		showError('Le mot de passe doit contenir entre 8 et 30 caractères');
+		return false;
+	}
+
+		// Validation de la complexité du mot de passe
+	const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]+$/;
+	if (!passwordRegex.test(password))
+	{
+		showError('Le mot de passe doit contenir au moins une majuscule, une minuscule et un chiffre');
+		return false;
+	}
+
+	// Vérifie que les mots de passe correspondent
+	if (password !== confirmPassword)
+	{
+		showError('Les mots de passe ne correspondent pas');
+		return false;
+	}
+
+	return true;
+}
+
+// Gère l'évènement relatif à la création d'un compte sur le site
+async function handleRegister(event)
+{
+	event.preventDefault();
+
+	const username = document.getElementById('username').value.trim();
+	const email = document.getElementById('email').value.trim();
+	const password = document.getElementById('password').value;
+	const confirmPassword = document.getElementById('confirmPassword').value;
+
+	if (!valideRegisterForm(username, email, password, confirmPassword))
+		return;
+
+	try
+	{
+		const hashedPassword = await hashPassword(password);
+
+		const response = await fetch(`${API_URL}/register`, {
+			method: 'POST',
+			...fetchOptions,
+			body: JSON.stringify({
+				username: username,
+				email: email,
+				password: hashedPassword
+			})
+		});
+
+		const data = await response.json();
+
+		if (data.success)
+			window.location.href = '/login';
+		else
+			showError(data.message);
+	}
+	catch (error)
+	{
+		showError('Une erreur est survenue. Veuillez réessayer.');
+	}
+}
+
 // Initialisation des écouteurs d'événements
 document.addEventListener('DOMContentLoaded', function() {
 	checkAuthStatus();
@@ -201,4 +299,8 @@ document.addEventListener('DOMContentLoaded', function() {
 	const loginForm = document.getElementById('loginForm');
 	if (loginForm)
 		loginForm.addEventListener('submit', handleLogin);
+
+	const registerForm = document.getElementById('registerForm');
+	if (registerForm)
+		registerForm.addEventListener('submit', handleRegister);
 });

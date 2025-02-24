@@ -9,6 +9,7 @@
 //##############################################################################################\\
 
 const db = require('../../services/database');
+const emailService = require('../../services/email');
 const crypto = require('crypto');
 
 // Vérifie si l'utilisateur est connecté ou non
@@ -58,7 +59,7 @@ async function 	checkStatus(req, res)
 	}
 	catch (error)
 	{
-		console.error('Erreur serveur détaillée:', error);
+		console.error('Erreur lors de la vérification:', error);
 		return res.status(500).json({
 			success: false,
 			message: 'Un problème technique est survenu. Veuillez réessayer plus tard.'
@@ -89,7 +90,7 @@ async function	logout(req, res)
 	}
 	catch (error)
 	{
-		console.error('Erreur serveur détaillée:', error);
+		console.error('Erreur lors de la vérification:', error);
 		return res.status(500).json({
 			success: false,
 			message: 'Un problème technique est survenu. Veuillez réessayer plus tard.'
@@ -215,15 +216,6 @@ function	valideRegisterForm(username, email, password)
 	if (!usernameRegex.test(username))
 		return false;
 
-	// // Validation de la longueur du mot de passe
-	// if (password.length < 8 || password.length > 30)
-	// 	return false;
-
-	// 	// Validation de la complexité du mot de passe
-	// const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]+$/;
-	// if (!passwordRegex.test(password))
-	// 	return false;
-
 	return true;
 }
 
@@ -297,9 +289,15 @@ async function	register(req, res)
 			[username, email, finalPassword, salt, verificationToken]
 		);
 
+		const emailSent = await emailService.sendVerificationEmail(email, username, verificationToken);
+
+		if (!emailSent)
+			console.warn(`Échec de l'envoi de l'email à ${email}`);
+
 		return res.json({
 			success: true,
-			message: 'Compte créé avec succès. Veuillez vérifier votre email pour activer votre compte.'
+			message: 'Compte créé avec succès. Veuillez vérifier votre email pour activer votre compte.',
+			redirect: '/login'
 		});
 	}
 	catch (error)
@@ -312,7 +310,68 @@ async function	register(req, res)
 	}
 }
 
+// Fonction vérifiant le token d'activation
+async function	verifyAccount(req, res)
+{
+	try
+	{
+		const token = req.params.token;
+
+		if (!token)
+		{
+			return res.status(400).json({
+				success: false,
+				message: 'Token de vérification manquant'
+			});
+		}
+
+		// Vérifie si le token existe et n'est pas expiré (délai : 24h)
+		const[user] = await db.execute(
+			`SELECT
+				id
+			FROM
+				users
+			WHERE
+				verification_token = ? AND is_verified = FALSE AND created_at > DATE_SUB(NOW(), INTERVAL 24 HOUR)`,
+			[token]
+		);
+
+		if (user.length === 0)
+		{
+			return res.json({
+				success: false,
+				message: 'Token invalide ou expiré'
+			})
+		}
+
+		await db.execute(
+			`UPDATE
+				users
+			SET
+				is_verified = TRUE, verification_token = NULL
+			WHERE
+				id = ?`,
+			[user[0].id]
+		);
+
+		return res.json({
+			success: true,
+			message: 'Votre compte a été activé avec succès. Vous pouvez maintenant vous connecter.',
+			redirect: '/login'
+		})
+	}
+	catch (error)
+	{
+		console.error('Erreur lors de la vérification du compte:', error);
+		return res.status(500).json({
+			success: false,
+			message: 'Une erreur est survenue lors de la vérification de votre compte'
+		});
+	}
+}
+
 exports.checkStatus = checkStatus;
 exports.logout = logout;
 exports.login = login;
 exports.register = register;
+exports.verifyAccount = verifyAccount;

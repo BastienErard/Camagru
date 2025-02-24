@@ -13,6 +13,7 @@ const router = express.Router();
 const authController = require('../controllers/authController');
 
 router.get('/status', authController.checkStatus);
+router.get('/verify/:token', authController.verifyAccount);
 router.post('/login', authController.login);
 router.post('/logout', authController.logout);
 router.post('/register', authController.register);

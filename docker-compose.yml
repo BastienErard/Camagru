@@ -13,11 +13,18 @@ services:
       - .env
     volumes:
       - ./backend:/app
+      - /app/node_modules
     depends_on:
       db:
         condition: service_healthy
     networks:
       - app-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
 
   frontend:
     build:
@@ -32,7 +39,8 @@ services:
     volumes:
       - ./frontend:/usr/share/nginx/html
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     networks:
       - app-network
 
@@ -42,10 +50,11 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: ${MYSQL_DATABASE}
+      TZ: Europe/Paris
     env_file:
       - .env
     ports:
-      - "3306:3306"
+      - "3307:3306"
     volumes:
       - db_data:/var/lib/mysql
       - ./init-scripts:/docker-entrypoint-initdb.d

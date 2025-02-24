@@ -33,6 +33,12 @@ app.use('/api/auth', authRoutes);
 // Servir les fichiers statiques si absence de Nginx
 app.use(express.static(path.join(__dirname, '../frontend')));
 
+// Healthcheck
+app.get('/health', (req, res) => {
+	console.log('Health check endpoint called');
+	res.status(200).send("OK");
+});
+
 // Démarrer le serveur
 app.listen(PORT, '0.0.0.0', () =>
 {

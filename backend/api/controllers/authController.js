@@ -12,6 +12,27 @@ const db = require('../../services/database');
 const emailService = require('../../services/email');
 const crypto = require('crypto');
 
+// Mets à jour la dernière activité
+async function updateUserActivity(authToken)
+{
+	try
+	{
+		await db.execute(`
+			UPDATE
+				users
+			SET
+				last_activity = CURRENT_TIMESTAMP
+			WHERE
+				verification_token = ?`,
+			[authToken]
+			);
+	}
+	catch (error)
+	{
+		console.error('Erreur lors de la mise à jour de l\'activité:', error);
+	}
+}
+
 // Vérifie si l'utilisateur est connecté ou non
 async function 	checkStatus(req, res)
 {
@@ -48,6 +69,8 @@ async function 	checkStatus(req, res)
 				user: null
 			});
 		}
+
+		await updateUserActivity(authToken);
 
 		return res.json({
 			isAuthenticated: true,

@@ -13,6 +13,7 @@ const dotenv = require('dotenv');
 const path = require('path');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
+const tokenCleaner = require('./services/tokenCleaner');
 dotenv.config()
 
 const app = express();
@@ -38,6 +39,12 @@ app.get('/health', (req, res) => {
 	console.log('Health check endpoint called');
 	res.status(200).send("OK");
 });
+
+// Nettoie les tokens expirés toutes les heures
+setInterval(() => {
+	tokenCleaner.cleanExpiredVerifTokens();
+	tokenCleaner.cleanInactiveSessionToken();
+}, 3600000); // 3600000 ms = 1 heure
 
 // Démarrer le serveur
 app.listen(PORT, '0.0.0.0', () =>

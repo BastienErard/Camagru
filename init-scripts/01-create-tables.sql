@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS users
 	avatar_id INT,
 	email_notifications BOOLEAN DEFAULT TRUE,
 	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	last_activity TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	is_verified BOOLEAN DEFAULT FALSE,
 	verification_token VARCHAR(255),
 	reset_token VARCHAR(255),

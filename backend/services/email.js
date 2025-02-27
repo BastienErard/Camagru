@@ -8,39 +8,49 @@
 //																							  \\
 //##############################################################################################\\
 
-const {exec} = require('child_process');
+const nodemailer = require('nodemailer');
 
-async function	sendVerificationEmail(email, username, token)
+// Créer un transporteur SMTP
+const transporter = nodemailer.createTransport({
+	host: 'smtp.gmail.com',
+	port: 587,
+	secure: false,
+	auth: {
+		user: process.env.EMAIL_USER,
+		pass: process.env.EMAIL_APP_PASSWORD
+	}
+});
+
+async function sendVerificationEmail(email, username, token)
 {
-	const 	verificationUrl = `http://localhost:${process.env.FRONTEND_PORT}/verify/${token}`;
-	const 	emailContent= `
-		To: ${email}
-		From: no-reply@camagru.com
-		Subject: Vérification de votre compte Camagru
+	const verificationUrl = `http://localhost:${process.env.BACKEND_PORT}/api/auth/verify/${token}`;
 
-		Bonjour ${username},
-
-		Pour activer votre compte, veuillez cliquer sur le lien suivant :
-		${verificationUrl}
-
-		Ce lien expire dans 24 heures.
-		`;
-
-	return new Promise(function(resolve)
+	try
 	{
-		// Exécute la commande shell pour envoyer l'email
-		const 	sendMail = exec(`echo "${emailContent}" | sendmail -t`);
+		const info = await transporter.sendMail({
+			from: `"Camagru" <${process.env.EMAIL_USER}>`,
+			to: email,
+			subject: 'Vérification de votre compte Camagru',
+			text: `Bonjour ${username},
 
-		// Quand la commande est terminée
-		sendMail.on('close', function(code) {
-			resolve(code === 0);
-		});
+			Pour activer votre compte, veuillez cliquer sur le lien suivant :
+			${verificationUrl}
 
-		sendMail.on('error', function(error) {
-			console.error('Erreur sendmail:', error);
-			resolve(false);
-		});
-	});
+			Ce lien expire dans 24 heures.`,
+					html: `<p>Bonjour ${username},</p>
+					<p>Pour activer votre compte, veuillez cliquer sur le lien suivant :</p>
+					<p><a href="${verificationUrl}" style="display: inline-block; background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">Valider mon compte</a></p>
+					<p>Ce lien expire dans 24 heures.</p>`
+				});
+
+		console.log('Email envoyé: %s', info.messageId);
+		return true;
+	}
+	catch (error)
+	{
+		console.error('Erreur lors de l\'envoi de l\'email:', error);
+		return false;
+	}
 }
 
 exports.sendVerificationEmail = sendVerificationEmail;

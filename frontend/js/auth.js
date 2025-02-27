@@ -282,7 +282,7 @@ async function handleRegister(event)
 		const data = await response.json();
 
 		if (data.success)
-			window.location.href = '/login';
+			window.location.href = data.redirect;
 		else
 			showError(data.message);
 	}
@@ -303,4 +303,22 @@ document.addEventListener('DOMContentLoaded', function() {
 	const registerForm = document.getElementById('registerForm');
 	if (registerForm)
 		registerForm.addEventListener('submit', handleRegister);
+
+	// Vérification des paramètres d'URL pour les messages de vérification d'email
+	const urlParams = new URLSearchParams(window.location.search);
+	const verification = urlParams.get('verification');
+	const message = urlParams.get('message');
+
+	if (verification && message && document.querySelector('form'))
+	{
+		const alertDiv = document.createElement('div');
+		alertDiv.className = (verification === 'success' || verification === 'pending')
+			? 'alert alert-success'
+			: 'alert alert-danger';
+		alertDiv.textContent = decodeURIComponent(message);
+
+		// Insérer l'alerte au début du formulaire
+		const form = document.querySelector('form');
+		form.parentNode.insertBefore(alertDiv, form);
+	}
 });

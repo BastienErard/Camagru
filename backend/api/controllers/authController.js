@@ -297,7 +297,7 @@ async function	register(req, res)
 		return res.json({
 			success: true,
 			message: 'Compte créé avec succès. Veuillez vérifier votre email pour activer votre compte.',
-			redirect: '/login'
+			redirect: '/login?verification=pending&message=Compte%20créé%20avec%20succès.%20Veuillez%20vérifier%20votre%20email%20pour%20activer%20votre%20compte.'
 		});
 	}
 	catch (error)
@@ -337,12 +337,8 @@ async function	verifyAccount(req, res)
 		);
 
 		if (user.length === 0)
-		{
-			return res.json({
-				success: false,
-				message: 'Token invalide ou expiré'
-			})
-		}
+			return res.redirect(`http://localhost:${process.env.FRONTEND_PORT}/login?verification=failed&message=Token%20invalide%20ou%20expiré`);
+
 
 		await db.execute(
 			`UPDATE
@@ -354,19 +350,12 @@ async function	verifyAccount(req, res)
 			[user[0].id]
 		);
 
-		return res.json({
-			success: true,
-			message: 'Votre compte a été activé avec succès. Vous pouvez maintenant vous connecter.',
-			redirect: '/login'
-		})
+		return res.redirect(`http://localhost:${process.env.FRONTEND_PORT}/login?verification=success&message=Votre%20compte%20a%20été%20activé%20avec%20succès`);
 	}
 	catch (error)
 	{
 		console.error('Erreur lors de la vérification du compte:', error);
-		return res.status(500).json({
-			success: false,
-			message: 'Une erreur est survenue lors de la vérification de votre compte'
-		});
+		return res.redirect(`http://localhost:${process.env.FRONTEND_PORT}/login?verification=error&message=Une%20erreur%20est%20survenue`);
 	}
 }
 

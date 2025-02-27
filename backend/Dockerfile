@@ -1,6 +1,9 @@
 # Utiliser une image Node.js officielle
 FROM node:18
 
+# Installation des certificats CA (utile pour les connexions TLS comme Gmail)
+RUN apt-get update && apt-get install -y ca-certificates && update-ca-certificates
+
 # Définir le répertoire de travail dans le conteneur
 WORKDIR /app
 

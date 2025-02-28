@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS users
 	is_verified BOOLEAN DEFAULT FALSE,
 	verification_token VARCHAR(255),
 	reset_token VARCHAR(255),
+	reset_token_expires TIMESTAMP DEFAULT NULL,
 	FOREIGN KEY (avatar_id) REFERENCES avatars(id)
 	ON DELETE SET NULL
 );

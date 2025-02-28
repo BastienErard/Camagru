@@ -44,7 +44,7 @@ app.get('/health', (req, res) => {
 setInterval(() => {
 	tokenCleaner.cleanExpiredVerifTokens();
 	tokenCleaner.cleanInactiveSessionToken();
-}, 3600000); // 3600000 ms = 1 heure
+}, 360000); // 3600000 ms = 1 heure
 
 // Démarrer le serveur
 app.listen(PORT, '0.0.0.0', () =>

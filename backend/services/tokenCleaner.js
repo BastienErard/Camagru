@@ -46,6 +46,8 @@ async function cleanInactiveSessionToken()
 			WHERE
 				is_verified = TRUE AND last_activity < DATE_SUB(NOW(), INTERVAL 24 HOUR) AND verification_token IS NOT NULL
 			`);
+		if (result.affectedRows > 0)
+			console.log(`${result.affectedRows} tokens de vérification expirés ont été supprimés.`);
 	}
 	catch (error)
 	{

@@ -382,8 +382,192 @@ async function	verifyAccount(req, res)
 	}
 }
 
+// Fonction permettant de demander une réinitialisation de mot de passe
+async function requestPasswordReset(req, res)
+{
+	try
+	{
+		const email = req.body.email;
+
+		if (!email)
+		{
+			return res.status(400).json({
+				success: false,
+				message: 'L\'adresse e-mail est requise'
+			});
+		}
+
+		const lowercaseEmail = email.toLowerCase();
+
+		const [users] = await db.execute(
+			`SELECT
+				id,
+				username,
+				email
+			FROM
+				users
+			WHERE
+				LOWER(email) = LOWER(?)`,
+			[lowercaseEmail]
+		);
+
+		// Succés envoyé pour des raisons de sécurités
+		if (users.length === 0)
+		{
+			return res.json({
+				success: true,
+				message: 'Si cette adresse e-mail est associée à un compte, vous recevrez un e-mail de réinitialisation.'
+			});
+		}
+
+		const user = users[0];
+
+		// Générer un token de réinitialisation
+		const resetToken = crypto.randomBytes(32).toString('hex');
+
+		await db.execute(
+			`UPDATE
+				users
+			SET
+				reset_token = ?, reset_token_expires = DATE_ADD(NOW(), INTERVAL 1 HOUR)
+			WHERE
+				id = ?`,
+			[resetToken, user.id]
+		);
+
+		// Envoi d'un e-mail de réinitialisation
+		await emailService.sendPasswordResetEmail(user.email, user.username, resetToken);
+
+		return res.json({
+			success: true,
+			message: 'Si cette adresse e-mail est associée à un compte, vous recevrez un e-mail de réinitialisation.'
+		});
+	}
+	catch (error)
+	{
+		console.error('Erreur lors de la demande de réinitialisation:', error);
+		return res.status(500).json({
+			success: false,
+			message: 'Une erreur est survenue. Veuillez réessayer.'
+		});
+	}
+}
+
+// Fonction pour réinitialiser le mot de passe
+async function resetPassword(req, res)
+{
+	try
+	{
+		const {token, password} = req.body;
+
+		if (!token || !password)
+		{
+			return res.status(400).json({
+				success: false,
+				message: 'Token et mot de passe requis'
+			});
+		}
+
+		const [users] = await db.execute(
+			`SELECT
+				id,
+				salt,
+				password AS old_password
+			FROM
+				users
+			WHERE
+				reset_token = ? AND reset_token_expires > NOW()`,
+			[token]
+		);
+
+		if (users.length === 0)
+		{
+			return res.json({
+				success: false,
+				message: 'Token invalide ou expiré'
+			});
+		}
+
+		const user = users[0];
+
+		// Combiner le mot de passe déjà haché avec le sel et refaire un hachage
+		const finalPassword = crypto.createHash('sha256')
+			.update(password + user.salt)
+			.digest('hex');
+
+		// Vérifier si le nouveau mot de passe est identique à l'ancien
+		if (finalPassword === user.old_password)
+		{
+			return res.json({
+			success: false,
+			message: 'Le nouveau mot de passe doit être différent de l\'ancien'
+			});
+		}
+
+		// Mise à jour de la DB et suppression du token de réinitialisation
+		await db.execute(
+			`UPDATE
+				users
+			SET
+				password = ?, reset_token = NULL, is_verified = TRUE, reset_token_expires = NULL
+			WHERE
+				id = ?`,
+			[finalPassword, user.id]
+		);
+
+		return res.json({
+			success: true,
+			message: 'Mot de passe réinitialisé avec succès'
+		});
+	}
+	catch (error)
+	{
+		console.error('Erreur lors de la réinitialisation du mot de passe:', error);
+		return res.status(500).json({
+			success: false,
+			message: 'Une erreur est survenue. Veuillez réessayer.'
+		});
+	}
+}
+
+// Redirection suite au reset
+async function resetPasswordRedirect(req, res)
+{
+	try
+	{
+		const token = req.params.token;
+
+		if (!token)
+			return res.redirect(`http://localhost:${process.env.FRONTEND_PORT}/reset-password?error=Token%20manquant`);
+
+		// Vérifie si le token existe et est valide
+		const [users] = await db.execute(
+			`SELECT
+				id
+			FROM
+				users
+			WHERE
+				reset_token = ? AND reset_token_expires > NOW()`,
+			[token]
+		);
+
+		if (users.length === 0)
+			return res.redirect(`http://localhost:${process.env.FRONTEND_PORT}/reset-password?error=Token%20invalide%20ou%20expiré`);
+
+		return res.redirect(`http://localhost:${process.env.FRONTEND_PORT}/reset-password?token=${token}`);
+	}
+	catch (error)
+	{
+		console.error('Erreur lors de la redirection de réinitialisation:', error);
+		return res.redirect(`http://localhost:${process.env.FRONTEND_PORT}/reset-password?error=Une%20erreur%20est%20survenue`);
+	}
+}
+
 exports.checkStatus = checkStatus;
 exports.logout = logout;
 exports.login = login;
 exports.register = register;
 exports.verifyAccount = verifyAccount;
+exports.requestPasswordReset = requestPasswordReset;
+exports.resetPassword = resetPassword;
+exports.resetPasswordRedirect = resetPasswordRedirect;

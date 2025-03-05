@@ -107,7 +107,7 @@ async function	logout()
 	}
 }
 
-// Affiche un message d'erreur pendant 5 secondes sur la page de login
+// Affiche un message d'erreur pendant 5 secondes
 function	showError(message)
 {
 	const errorMessage = document.getElementById('errorMessage');
@@ -116,6 +116,18 @@ function	showError(message)
 
 	setTimeout(function() {
 		errorMessage.classList.add('d-none');
+	}, 5000);
+}
+
+// Affiche un message de succès pendant 5 secondes
+function	showSuccess(message)
+{
+	const successMessage = document.getElementById('successMessage');
+	successMessage.textContent = message;
+	successMessage.classList.remove('d-none');
+
+	setTimeout(function() {
+		successMessage.classList.add('d-none');
 	}, 5000);
 }
 
@@ -292,9 +304,151 @@ async function handleRegister(event)
 	}
 }
 
+// Fonction gérant la demande de réinitialisation de mot de passe
+async function	handlePasswordResetRequest(event)
+{
+	event.preventDefault();
+
+	const email = document.getElementById('email').value.trim();
+
+	// Validation du format de l'email
+	const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+	if (!email || !emailRegex.test(email))
+	{
+		showError('Format d\'email invalide');
+		return;
+	}
+
+	try
+	{
+		const response = await fetch(`${API_URL}/request-reset`, {
+			method: 'POST',
+			...fetchOptions,
+			body: JSON.stringify({
+				email: email
+			})
+		});
+
+		const data = await response.json();
+
+		if (data.success)
+		{
+			document.getElementById('email').value = '';
+			showSuccess('Un e-mail de réinitialisation a été envoyé à votre adresse si elle est associée à un compte.');
+		}
+		else
+			showError(data.message || 'Une erreur est survenue. Veuillez réessayer.');
+	}
+	catch (error)
+	{
+		console.error('Erreur lors de la demande de réinitialisation:', error);
+		showError('Une erreur est survenue. Veuillez réessayer.');
+	}
+}
+
+// Fonction pour valider le nouveau mot de passe
+function validateNewPassword(password, confirmPassword)
+{
+
+	if (!password || !confirmPassword)
+	{
+		showError('Veuillez remplir tous les champs');
+		return false;
+	}
+	// Validation de la longueur du mot de passe
+	if (password.length < 8 || password.length > 30)
+	{
+		showError('Le mot de passe doit contenir entre 8 et 30 caractères');
+		return false;
+	}
+
+		// Validation de la complexité du mot de passe
+	const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]+$/;
+	if (!passwordRegex.test(password))
+	{
+		showError('Le mot de passe doit contenir au moins une majuscule, une minuscule et un chiffre');
+		return false;
+	}
+
+	// Vérifie que les mots de passe correspondent
+	if (password !== confirmPassword)
+	{
+		showError('Les mots de passe ne correspondent pas');
+		return false;
+	}
+
+	return true;
+}
+
+// Fonction pour gérer la réinitialisation du mot de passe
+async function handlePasswordReset(event)
+{
+	event.preventDefault();
+
+	const token = document.getElementById('resetToken').value;
+	const password = document.getElementById('newPassword').value;
+	const confirmPassword = document.getElementById('confirmNewPassword').value;
+
+	if (!validateNewPassword(password, confirmPassword))
+		return;
+
+	try
+	{
+		const hashedPassword = await hashPassword(password);
+
+		const response = await fetch(`${API_URL}/reset-password`, {
+			method: 'POST',
+			...fetchOptions,
+			body: JSON.stringify({
+				token: token,
+				password: hashedPassword
+			})
+		});
+
+		const data = await response.json();
+
+		if (data.success)
+		{
+			showSuccess('Votre mot de passe a été réinitialisé avec succès. Vous allez être redirigé vers la page de connexion.');
+			setTimeout(() => {
+				window.location.href = '/login';
+			}, 3000);
+		}
+		else
+			showError(data.message || 'Une erreur est survenue. Veuillez réessayer.');
+	}
+	catch (error)
+	{
+		console.error('Erreur lors de la réinitialisation du mot de passe:', error);
+		showError('Une erreur est survenue. Veuillez réessayer.');
+	}
+}
+
+// Fonction vérifiant la présence d'un token de réinitialisation dans l'URL
+function	checkResetToken()
+{
+	const urlParams = new URLSearchParams(window.location.search);
+	const token = urlParams.get('token');
+	const error = urlParams.get('error');
+
+	if (window.location.pathname === '/reset-password')
+	{
+		if (token)
+		{
+			// Afficher le formulaire de réinitialisation
+			document.getElementById('requestResetForm').classList.add('d-none');
+			document.getElementById('resetPasswordForm').classList.remove('d-none');
+			document.getElementById('resetToken').value = token;
+		}
+		else if (error)
+			showError(decodeURIComponent(error));
+	}
+}
+
 // Initialisation des écouteurs d'événements
 document.addEventListener('DOMContentLoaded', function() {
 	checkAuthStatus();
+	checkResetToken();
 
 	const loginForm = document.getElementById('loginForm');
 	if (loginForm)
@@ -303,6 +457,14 @@ document.addEventListener('DOMContentLoaded', function() {
 	const registerForm = document.getElementById('registerForm');
 	if (registerForm)
 		registerForm.addEventListener('submit', handleRegister);
+
+	const passwordResetRequestForm = document.getElementById('passwordResetRequestForm');
+	if (passwordResetRequestForm)
+		passwordResetRequestForm.addEventListener('submit', handlePasswordResetRequest);
+
+	const newPasswordForm = document.getElementById('newPasswordForm');
+	if (newPasswordForm)
+		newPasswordForm.addEventListener('submit', handlePasswordReset);
 
 	// Vérification des paramètres d'URL pour les messages de vérification d'email
 	const urlParams = new URLSearchParams(window.location.search);

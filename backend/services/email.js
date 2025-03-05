@@ -21,6 +21,7 @@ const transporter = nodemailer.createTransport({
 	}
 });
 
+// Fonction envoyant l'e-mail pour vérifier le compte suite création
 async function sendVerificationEmail(email, username, token)
 {
 	const verificationUrl = `http://localhost:${process.env.BACKEND_PORT}/api/auth/verify/${token}`;
@@ -53,4 +54,42 @@ async function sendVerificationEmail(email, username, token)
 	}
 }
 
+// Fonction envoyant un reset suite demande de l'utilisateur
+async function sendPasswordResetEmail(email, username, token)
+{
+	const resetUrl = `http://localhost:${process.env.BACKEND_PORT}/api/auth/reset-password-redirect/${token}`;
+
+	try
+	{
+		const info = await transporter.sendMail({
+			from: `"Camagru" <${process.env.EMAIL_USER}>`,
+			to: email,
+			subject: 'Réinitialisation de votre mot de passe Camagru',
+			text: `Bonjour ${username},
+
+			Vous avez demandé la réinitialisation de votre mot de passe.
+			Pour créer un nouveau mot de passe, veuillez cliquer sur le lien suivant :
+			${resetUrl}
+
+			Ce lien expire dans 1 heure.
+
+			Si vous n'avez pas demandé cette réinitialisation, veuillez ignorer cet e-mail.`,
+			html: `<p>Bonjour ${username},</p>
+			<p>Vous avez demandé la réinitialisation de votre mot de passe.</p>
+			<p>Pour créer un nouveau mot de passe, veuillez cliquer sur le bouton ci-dessous :</p>
+			<p><a href="${resetUrl}" style="display: inline-block; background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">Réinitialiser mon mot de passe</a></p>
+			<p>Ce lien expire dans 1 heure.</p>
+			<p>Si vous n'avez pas demandé cette réinitialisation, veuillez ignorer cet e-mail.</p>`
+		});
+		console.log('Email de réinitialisation envoyé: %s', info.messageId);
+		return true;
+	}
+	catch (error)
+	{
+		console.error('Erreur lors de l\'envoi de l\'email de réinitialisation:', error);
+		return false;
+	}
+}
+
 exports.sendVerificationEmail = sendVerificationEmail;
+exports.sendPasswordResetEmail = sendPasswordResetEmail;

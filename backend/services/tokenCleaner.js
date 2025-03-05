@@ -34,7 +34,7 @@ async function	cleanExpiredVerifTokens()
 }
 
 // Nettoie les tokens de session inactifs (délai fixé à 24h)
-async function cleanInactiveSessionToken()
+async function cleanInactiveSessionTokens()
 {
 	try
 	{
@@ -55,5 +55,28 @@ async function cleanInactiveSessionToken()
 	}
 }
 
+
+async function	cleanExpiredResetTokens()
+{
+	try
+	{
+		const [result] = await db.execute(`
+			UPDATE
+				users
+			SET
+				reset_token = NULL,
+				reset_token_expires = NULL
+			WHERE
+				reset_token IS NOT NULL and reset_token_expires < NOW()
+			`);
+		if (result.affectedRows > 0)
+			console.log(`${result.affectedRows} tokens de réinitialisation expirés ont été supprimés.`);
+	}
+	catch (error)
+	{
+		console.error('Erreur lors du nettoyage des tokens de réinitialisation expirés:', error);
+	}
+}
 exports.cleanExpiredVerifTokens = cleanExpiredVerifTokens;
-exports.cleanInactiveSessionToken = cleanInactiveSessionToken;
+exports.cleanInactiveSessionTokens = cleanInactiveSessionTokens;
+exports.cleanExpiredResetTokens = cleanExpiredResetTokens;

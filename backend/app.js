@@ -43,7 +43,8 @@ app.get('/health', (req, res) => {
 // Nettoie les tokens expirés toutes les heures
 setInterval(() => {
 	tokenCleaner.cleanExpiredVerifTokens();
-	tokenCleaner.cleanInactiveSessionToken();
+	tokenCleaner.cleanInactiveSessionTokens();
+	tokenCleaner.cleanExpiredResetTokens();
 }, 360000); // 3600000 ms = 1 heure
 
 // Démarrer le serveur

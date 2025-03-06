@@ -55,7 +55,7 @@ async function cleanInactiveSessionTokens()
 	}
 }
 
-
+// Nettoie les tokens de réinitialisation (délai fixé à 01h00)
 async function	cleanExpiredResetTokens()
 {
 	try

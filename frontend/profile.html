@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="fr">
+	<head>
+		<meta charset="UTF-8">
+		<link rel="icon" href="media/favicon.ico" type="image/x-icon">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<link rel="stylesheet" href="/css/bootstrap.min.css" type="text/css">
+		<link rel="stylesheet" href="/css/styles.css" type="text/css">
+		<title>Camagru - Profil</title>
+	</head>
+	<body>
+		<header>
+			<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+				<div class="container-fluid">
+					<!-- Logo et Titre -->
+					<div class="d-flex align-items-center">
+						<a href="/" class="text-decoration-none">
+							<div class="d-flex align-items-center">
+								<img src="/media/logo.png" alt="Logo Camagru" class="navbar-logo me-2">
+								<span class="navbar-brand">Camagru</span>
+							</div>
+						</a>
+					</div>
+
+					<!-- Zone dynamique - Menu -->
+					<div id="menu" class="ms-auto"></div>
+				</div>
+			</nav>
+		</header>
+
+		<div class="container mt-5">
+			<div class="row justify-content-center">
+				<div class="col-md-6">
+
+					<!-- Alertes pour les messages de succès/erreur -->
+					<div id="errorMessage" class="alert alert-danger d-none mb-3"></div>
+					<div id="successMessage" class="alert alert-success d-none mb-3"></div>
+
+					<!-- Vue principale du profil -->
+					<div id="profileView" class="card">
+						<div class="card-header">
+							<h4 class="mb-0">Mon profil</h4>
+						</div>
+						<div class="card-body">
+							<form id="profileForm">
+								<div class="mb-3 row">
+									<label for="username" class="col-sm-4 col-form-label">Nom d'utilisateur :</label>
+									<div class="col-sm-8">
+										<input type="text" class="form-control" id="username" disabled>
+									</div>
+								</div>
+								<div class="mb-3 row">
+									<label for="email" class="col-sm-4 col-form-label">Adresse e-mail :</label>
+									<div class="col-sm-8">
+										<input type="email" class="form-control" id="email" disabled>
+									</div>
+								</div>
+								<div class="mb-3 row">
+									<label class="col-sm-4 col-form-label">Notifications :</label>
+									<div class="col-sm-8 d-flex align-items-center">
+										<div class="form-check form-switch">
+											<input class="form-check-input" type="checkbox" id="emailNotifications" disabled>
+											<label class="form-check-label" for="emailNotifications">Recevoir des notifications par e-mail</label>
+										</div>
+									</div>
+								</div>
+								<div class="mb-3 row">
+									<label class="col-sm-4 col-form-label">Avatar :</label>
+									<div class="col-sm-8">
+										<div class="d-flex flex-column">
+											<img id="avatarPreview" src="" alt="Avatar" class="img-thumbnail mb-2" style="width: 100px; height: 100px; object-fit: cover;">
+											<div id="avatarSelectionContainer" class="d-none">
+												<div class="d-flex flex-wrap gap-2 mb-2" id="avatarGallery">
+													<!-- Les avatars seront chargés dynamiquement ici -->
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+								<div class="d-flex justify-content-between mt-4">
+									<button type="button" id="editProfileBtn" class="btn btn-primary">Modifier</button>
+									<button type="button" id="changePasswordBtn" class="btn btn-secondary">Changer de mot de passe</button>
+									<button type="button" id="deleteAccountBtn" class="btn btn-danger">Supprimer le compte</button>
+								</div>
+							</form>
+						</div>
+					</div>
+
+					<!-- Vue d'édition du profil (initialement cachée) -->
+					<div id="editProfileView" class="card d-none">
+						<div class="card-header">
+							<h4 class="mb-0">Modifier mon profil</h4>
+						</div>
+						<div class="card-body">
+							<form id="editProfileForm">
+								<div class="mb-3 row">
+									<label for="editUsername" class="col-sm-4 col-form-label">Nom d'utilisateur :</label>
+									<div class="col-sm-8">
+										<input type="text" class="form-control" id="editUsername">
+									</div>
+								</div>
+								<div class="mb-3 row">
+									<label for="editEmail" class="col-sm-4 col-form-label">Adresse e-mail :</label>
+									<div class="col-sm-8">
+										<input type="email" class="form-control" id="editEmail">
+									</div>
+								</div>
+								<div class="mb-3 row">
+									<label class="col-sm-4 col-form-label">Notifications :</label>
+									<div class="col-sm-8 d-flex align-items-center">
+										<div class="form-check form-switch">
+											<input class="form-check-input" type="checkbox" id="editEmailNotifications">
+											<label class="form-check-label" for="editEmailNotifications">Recevoir des notifications par e-mail</label>
+										</div>
+									</div>
+								</div>
+								<div class="mb-3 row">
+									<label class="col-sm-4 col-form-label">Avatar :</label>
+									<div class="col-sm-8">
+										<div class="d-flex flex-column">
+											<img id="editAvatarPreview" src="" alt="Avatar" class="img-thumbnail mb-2" style="width: 100px; height: 100px; object-fit: cover;">
+											<div class="d-flex flex-wrap gap-2 mb-2" id="editAvatarGallery">
+												<!-- Les avatars seront chargés dynamiquement ici -->
+											</div>
+											<input type="hidden" id="selectedAvatarId" value="">
+										</div>
+									</div>
+								</div>
+								<div class="d-flex justify-content-between mt-4">
+									<button type="submit" class="btn btn-success">Sauvegarder les modifications</button>
+									<button type="button" id="cancelEditBtn" class="btn btn-secondary">Retour</button>
+								</div>
+							</form>
+						</div>
+					</div>
+
+					<!-- Vue de changement de mot de passe (initialement cachée) -->
+					<div id="changePasswordView" class="card d-none">
+						<div class="card-header">
+							<h4 class="mb-0">Changer de mot de passe</h4>
+						</div>
+						<div class="card-body">
+							<form id="changePasswordForm">
+								<div class="mb-3">
+									<label for="currentPassword" class="form-label">Mot de passe actuel :</label>
+									<input type="password" class="form-control" id="currentPassword" required>
+								</div>
+								<div class="mb-3">
+									<label for="newPassword" class="form-label">Nouveau mot de passe :</label>
+									<input type="password" class="form-control" id="newPassword" required>
+								</div>
+								<div class="mb-3">
+									<label for="confirmNewPassword" class="form-label">Confirmer le nouveau mot de passe :</label>
+									<input type="password" class="form-control" id="confirmNewPassword" required>
+								</div>
+								<div class="d-flex justify-content-between mt-4">
+									<button type="submit" class="btn btn-success">Sauvegarder le mot de passe</button>
+									<button type="button" id="cancelPasswordBtn" class="btn btn-secondary">Retour</button>
+								</div>
+							</form>
+						</div>
+					</div>
+
+					<!-- Vue de suppression de compte (initialement cachée) -->
+					<div id="deleteAccountView" class="card d-none">
+						<div class="card-header">
+							<h4 class="mb-0 text-danger">Supprimer mon compte</h4>
+						</div>
+						<div class="card-body">
+							<div class="alert alert-danger">
+								<strong>Attention !</strong> Cette action est irréversible. Toutes vos données et publications seront définitivement supprimées.
+							</div>
+							<form id="deleteAccountForm">
+								<div class="mb-3">
+									<label for="confirmUsername" class="form-label">Pour confirmer, entrez votre nom d'utilisateur :</label>
+									<input type="text" class="form-control" id="confirmUsername" required>
+								</div>
+								<div class="mb-3">
+									<label for="confirmPassword" class="form-label">Mot de passe :</label>
+									<input type="password" class="form-control" id="confirmPassword" required>
+								</div>
+								<div class="d-flex justify-content-between mt-4">
+									<button type="submit" class="btn btn-danger">Supprimer mon compte définitivement</button>
+									<button type="button" id="cancelDeleteBtn" class="btn btn-secondary">Retour</button>
+								</div>
+							</form>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<footer class="fixed-bottom">
+			<div class="container-fluid bg-dark text-light d-flex justify-content-center align-items-center">
+				<p class="m-0">© 2025 - Camagru</p>
+			</div>
+		</footer>
+
+		<script src="/js/bootstrap.bundle.min.js"></script>
+		<script src="/js/auth.js"></script>
+		<script src="/js/profile.js"></script>
+	</body>
+</html>

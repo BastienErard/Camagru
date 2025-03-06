@@ -29,7 +29,9 @@ app.use(cors({
 
 // Routes
 const authRoutes = require('./api/routes/authRoutes');
+const profileRoutes = require('./api/routes/profileRoutes');
 app.use('/api/auth', authRoutes);
+app.use('/api/profile', profileRoutes);
 
 // Servir les fichiers statiques si absence de Nginx
 app.use(express.static(path.join(__dirname, '../frontend')));

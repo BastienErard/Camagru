@@ -31,6 +31,7 @@ async function getUserProfile(req, res)
 				users.username,
 				users.email,
 				users.email_notifications AS emailNotifications,
+				users.avatar_id AS avatarId,
 				avatars.file_path AS avatar
 			FROM
 				users
@@ -119,7 +120,7 @@ async function updateProfile(req, res)
 			FROM
 				users
 			WHERE
-				verification_token = _`,
+				verification_token = ?`,
 			[authToken]
 		);
 

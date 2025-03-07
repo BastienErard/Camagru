@@ -41,33 +41,70 @@ const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
 let userData = null;
 let availableAvatars = [];
 
+// Variables pour stocker les timers des messages
+let errorMessageTimer = null;
+let successMessageTimer = null;
+
+// Fonction pour cacher tous les messages
+function	hideAllMessages()
+{
+	// Effacer les timers existants
+	if (errorMessageTimer)
+	{
+		clearTimeout(errorMessageTimer);
+		errorMessageTimer = null;
+	}
+	if (successMessageTimer)
+	{
+		clearTimeout(successMessageTimer);
+		successMessageTimer = null;
+	}
+
+	// Cacher les messages
+	const errorMessage = document.getElementById('errorMessage');
+	const successMessage = document.getElementById('successMessage');
+
+	if (errorMessage)
+		errorMessage.classList.add('d-none');
+	if (successMessage)
+		successMessage.classList.add('d-none');
+}
+
 // Fonction pour afficher les messages d'erreur
 function showError(message)
 {
+	hideAllMessages();
+
 	const errorMessage = document.getElementById('errorMessage');
 	errorMessage.textContent = message;
 	errorMessage.classList.remove('d-none');
 
-	setTimeout(function() {
+	// Définir un nouveau timer
+	errorMessageTimer = setTimeout(function() {
 		errorMessage.classList.add('d-none');
+		errorMessageTimer = null;
 	}, 5000);
 }
 
 // Fonction pour afficher les messages de succès
 function showSuccess(message)
 {
+	hideAllMessages();
+
 	const successMessage = document.getElementById('successMessage');
 	successMessage.textContent = message;
 	successMessage.classList.remove('d-none');
 
-	setTimeout(function() {
+	successMessageTimer = setTimeout(function() {
 		successMessage.classList.add('d-none');
+		successMessageTimer = null;
 	}, 5000);
 }
 
 // Fonction pour basculer entre les différentes vues
 function showView(viewToShow)
 {
+	hideAllMessages();
 	// Cacher toutes les vues
 	profileView.classList.add('d-none');
 	editProfileView.classList.add('d-none');
@@ -169,7 +206,7 @@ function displayUserProfile()
 	document.getElementById('editEmail').value = userData.email;
 	document.getElementById('editEmailNotifications').checked = userData.emailNotifications;
 	document.getElementById('editAvatarPreview').src = userData.avatar;
-	document.getElementById('selectedAvatarId').value = userData.avatarId;
+	document.getElementById('selectedAvatarId').value = userData.avatarId || 1;
 }
 
 // Fonction pour peupler la galerie d'avatars
@@ -178,13 +215,16 @@ function populateAvatarGallery()
 	const gallery = document.getElementById('editAvatarGallery');
 	gallery.innerHTML = '';
 
+	// Vérifier si un avatar est actuellement sélectionné
+	const currentAvatarId = parseInt(userData.avatarId) || 1;
+
 	availableAvatars.forEach(avatar => {
 		const avatarElement = document.createElement('div');
 		avatarElement.className = 'avatar-option';
 		avatarElement.innerHTML = `
 			<img src="${avatar.file_path}"
 				 alt="${avatar.name}"
-				 class="img-thumbnail avatar-thumbnail ${avatar.id === userData.avatarId ? 'selected' : ''}"
+				class="img-thumbnail avatar-thumbnail ${parseInt(avatar.id) === currentAvatarId ? 'selected' : ''}"
 				 style="width: 60px; height: 60px; object-fit: cover; cursor: pointer;"
 				 data-avatar-id="${avatar.id}">
 		`;
@@ -206,6 +246,16 @@ function populateAvatarGallery()
 
 		gallery.appendChild(avatarElement);
 	});
+
+	// S'assurer qu'un avatar est toujours sélectionné
+	if (document.querySelectorAll('.avatar-thumbnail.selected').length === 0 && availableAvatars.length > 0) {
+		const firstAvatar = document.querySelector('.avatar-thumbnail');
+		if (firstAvatar) {
+			firstAvatar.classList.add('selected');
+			document.getElementById('editAvatarPreview').src = firstAvatar.src;
+			document.getElementById('selectedAvatarId').value = firstAvatar.dataset.avatarId;
+		}
+	}
 }
 
 // Fonction pour mettre à jour le profil
@@ -222,6 +272,26 @@ async function	updateProfile(event)
 	if (!username || !email)
 	{
 		showError('Tous les champs sont obligatoires');
+		return;
+	}
+
+	if (username.length < 3 || username.length > 20)
+	{
+		showError('Le nom d\'utilisateur doit contenir entre 3 et 20 caractères');
+		return;
+	}
+
+	const usernameRegex = /^[a-zA-Z0-9_-]{3,20}$/;
+	if (!usernameRegex.test(username))
+	{
+		showError('Le nom d\'utilisateur ne doit contenir que des lettres, chiffres, tirets et underscores');
+		return;
+	}
+
+	const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+	if (!emailRegex.test(email))
+	{
+		showError('Format d\'email invalide');
 		return;
 	}
 
@@ -246,6 +316,14 @@ async function	updateProfile(event)
 			displayUserProfile();
 			showView(profileView);
 			showSuccess('Votre profil a été mis à jour avec succès');
+			if (window.authState)
+			{
+				window.authState.user = {
+					username: userData.username,
+					avatar: userData.avatar
+				};
+				window.updateUI();
+			}
 		}
 		else
 		{
@@ -278,6 +356,19 @@ async function changePassword(event)
 	if (newPassword !== confirmNewPassword)
 	{
 		showError('Les mots de passe ne correspondent pas');
+		return;
+	}
+
+	if (newPassword.length < 8 || newPassword.length > 30)
+	{
+		showError('Le mot de passe doit contenir entre 8 et 30 caractères');
+		return;
+	}
+
+	const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]+$/;
+	if (!passwordRegex.test(newPassword))
+	{
+		showError('Le mot de passe doit contenir au moins une majuscule, une minuscule et un chiffre');
 		return;
 	}
 
@@ -367,11 +458,11 @@ async function deleteAccount(event)
 }
 
 // Initialisation: ajouter les écouteurs d'événements
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
 	// Charger le profil de l'utilisateur au chargement de la page
-	loadUserProfile();
+	await loadUserProfile();
 	// Charger les avatars disponibles
-	loadAvatars();
+	await loadAvatars();
 
 	// Boutons pour afficher les différentes vues
 	editProfileBtn.addEventListener('click', function() {

@@ -18,7 +18,7 @@ const fetchOptions = {
 };
 
 // Etat global de l'authentification
-let authState = {
+window.authState = {
 	isAuthenticated: false,
 	user: null
 }
@@ -59,6 +59,7 @@ function	updateUI()
 		menuDiv.innerHTML = `
 			<div class="d-flex align-items-center">
 				<a href="/gallery" class="btn btn-outline-light me-3">Galerie</a>
+				<a href="/editing" class="btn btn-outline-light me-3">Edition</a>
 				<div class="dropdown">
 					<button class="btn btn-outline-light dropdown-toggle" type="button" id="userMenu" data-bs-toggle="dropdown" aria-expanded="false">
 						<img src="${authState.user.avatar}"
@@ -107,27 +108,63 @@ async function	logout()
 	}
 }
 
-// Affiche un message d'erreur pendant 5 secondes
-function	showError(message)
+// Variables pour stocker les timers des messages
+let errorMessageTimerAuth = null;
+let successMessageTimerAuth = null;
+
+// Fonction pour cacher tous les messages
+function	hideAllMessages()
 {
+	// Effacer les timers existants
+	if (errorMessageTimerAuthAuth)
+	{
+		clearTimeout(errorMessageTimerAuth);
+		errorMessageTimerAuth = null;
+	}
+	if (successMessageTimerAuth)
+	{
+		clearTimeout(successMessageTimerAuth);
+		successMessageTimerAuth = null;
+	}
+
+	// Cacher les messages
+	const errorMessage = document.getElementById('errorMessage');
+	const successMessage = document.getElementById('successMessage');
+
+	if (errorMessage)
+		errorMessage.classList.add('d-none');
+	if (successMessage)
+		successMessage.classList.add('d-none');
+}
+
+// Fonction pour afficher les messages d'erreur
+function showError(message)
+{
+	hideAllMessages();
+
 	const errorMessage = document.getElementById('errorMessage');
 	errorMessage.textContent = message;
 	errorMessage.classList.remove('d-none');
 
-	setTimeout(function() {
+	// Définir un nouveau timer
+	errorMessageTimerAuth = setTimeout(function() {
 		errorMessage.classList.add('d-none');
+		errorMessageTimerAuth = null;
 	}, 5000);
 }
 
-// Affiche un message de succès pendant 5 secondes
-function	showSuccess(message)
+// Fonction pour afficher les messages de succès
+function showSuccess(message)
 {
+	hideAllMessages();
+
 	const successMessage = document.getElementById('successMessage');
 	successMessage.textContent = message;
 	successMessage.classList.remove('d-none');
 
-	setTimeout(function() {
+	successMessageTimerAuth = setTimeout(function() {
 		successMessage.classList.add('d-none');
+		successMessageTimerAuth = null;
 	}, 5000);
 }
 
@@ -484,3 +521,5 @@ document.addEventListener('DOMContentLoaded', function() {
 		form.parentNode.insertBefore(alertDiv, form);
 	}
 });
+
+window.updateUI = updateUI;

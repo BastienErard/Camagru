@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<link rel="icon" href="media/favicon.ico" type="image/x-icon">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<link rel="stylesheet" href="/css/bootstrap.min.css" type="text/css">
+		<link rel="stylesheet" href="/css/styles.css" type="text/css">
+		<title>Camagru - Studio Photo</title>
+	</head>
+	<body>
+		<header>
+			<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+				<div class="container-fluid">
+					<!-- Logo et Titre -->
+					<div class="d-flex align-items-center">
+						<a href="/" class="text-decoration-none">
+							<div class="d-flex align-items-center">
+								<img src="/media/logo.png" alt="Logo Camagru" class="navbar-logo me-2">
+								<span class="navbar-brand">Camagru</span>
+							</div>
+						</a>
+					</div>
+
+					<!-- Zone dynamique - Menu -->
+					<div id="menu" class="ms-auto"></div>
+				</div>
+			</nav>
+		</header>
+
+		<div class="container mt-4">
+			<!-- Messages d'alerte -->
+			<div id="errorMessage" class="alert alert-danger d-none" role="alert"></div>
+			<div id="successMessage" class="alert alert-success d-none" role="alert"></div>
+
+			<div class="row">
+				<!-- Section principale - Webcam et contrôles -->
+				<div class="col-lg-8 mb-4">
+					<div class="card shadow">
+						<div class="card-header bg-primary text-white">
+							<h5 class="mb-0">Studio Photo</h5>
+						</div>
+						<div class="card-body">
+							<!-- Zone de prévisualisation webcam -->
+							<div class="mb-3">
+								<div id="videoContainer" class="bg-dark rounded">
+									<video id="video" class="w-100 rounded" autoplay playsinline></video>
+									<div id="stickersPreview"></div>
+								</div>
+								<canvas id="canvas"></canvas>
+							</div>
+
+							<!-- Contrôles de la caméra -->
+							<div class="d-flex justify-content-between mb-3">
+								<div>
+									<button id="toggleCameraBtn" class="btn btn-outline-primary me-2">Activer la caméra</button>
+									<button id="switchCameraBtn" class="btn btn-outline-secondary" disabled>Changer de caméra</button>
+								</div>
+								<button id="captureBtn" class="btn btn-success">Prendre une photo</button>
+							</div>
+
+							<!-- Upload d'image alternative -->
+							<div class="mb-3">
+								<label for="imageUpload" class="form-label d-block btn btn-secondary text-white">
+									Ou télécharger une image
+									<input type="file" id="imageUpload" class="d-none" accept="image/*">
+								</label>
+							</div>
+
+							<!-- Instructions pour les stickers -->
+							<div class="alert alert-info mb-3">
+								<small>
+									<strong>Astuces :</strong>
+									<ul class="mb-0">
+										<li>Cliquez sur un sticker pour l'ajouter (maximum 3)</li>
+										<li>Glissez-déposez les stickers pour les positionner</li>
+										<li>Double-cliquez sur un sticker pour le faire pivoter</li>
+										<li>Cliquez à nouveau sur un sticker dans la liste pour le retirer</li>
+									</ul>
+								</small>
+							</div>
+
+							<!-- Contrôles des stickers -->
+							<div class="mb-3">
+								<label for="stickerSize" class="form-label">Taille du sticker: <span id="stickerSizeValue">30%</span></label>
+								<input type="range" class="form-range" id="stickerSize" min="10" max="100" value="30">
+							</div>
+
+							<!-- Sélection des stickers -->
+							<h6 class="mb-3">Stickers disponibles:</h6>
+							<div id="stickersContainer" class="d-flex flex-wrap gap-2 mb-3"></div>
+
+							<!-- Animation GIF contrôle -->
+							<div class="form-check mb-2">
+								<input class="form-check-input" type="checkbox" id="createGifCheckbox">
+								<label class="form-check-label" for="createGifCheckbox">
+									Créer un GIF animé (prend plusieurs photos)
+								</label>
+							</div>
+							<div id="gifControls" class="mb-3 d-none">
+								<div class="row g-2 align-items-center">
+									<div class="col-auto">
+										<label for="frameCount" class="col-form-label">Nombre d'images:</label>
+									</div>
+									<div class="col-auto">
+										<input type="number" class="form-control form-control-sm" id="frameCount" min="2" max="10" value="5" style="width: 70px;">
+									</div>
+									<div class="col-auto">
+										<label for="frameDelay" class="col-form-label">Délai (ms):</label>
+									</div>
+									<div class="col-auto">
+										<input type="number" class="form-control form-control-sm" id="frameDelay" min="100" max="1000" step="100" value="200" style="width: 90px;">
+									</div>
+								</div>
+								<div class="progress mt-2 d-none" id="gifProgressContainer">
+									<div id="gifProgress" class="progress-bar" role="progressbar" style="width: 0%"></div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- Section latérale - Miniatures -->
+				<div class="col-lg-4">
+					<div class="card shadow">
+						<div class="card-header bg-secondary text-white">
+							<h5 class="mb-0">Mes créations</h5>
+						</div>
+						<div class="card-body">
+							<div id="userPhotos" class="row row-cols-2 row-cols-sm-3 g-2">
+								<!-- Les miniatures seront insérées ici dynamiquement -->
+							</div>
+							<div id="loadingPhotos" class="text-center py-4">
+								<div class="spinner-border text-primary" role="status">
+									<span class="visually-hidden">Chargement...</span>
+								</div>
+							</div>
+							<div id="noPhotosMessage" class="text-center py-4 d-none">
+								<p class="text-muted">Vous n'avez pas encore de photos. Prenez-en une!</p>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<footer class="mt-5">
+			<div class="container-fluid bg-dark text-light d-flex justify-content-center align-items-center py-3">
+				<p class="m-0">© 2025 - Camagru</p>
+			</div>
+		</footer>
+
+		<script src="/js/bootstrap.bundle.min.js"></script>
+		<script src="/js/auth.js"></script>
+		<script src="/js/editing.js"></script>
+	</body>
+</html>

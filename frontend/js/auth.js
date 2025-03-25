@@ -523,3 +523,4 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 window.updateUI = updateUI;
+window.checkAuthStatus = checkAuthStatus;

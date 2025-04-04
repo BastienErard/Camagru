@@ -31,8 +31,8 @@ CREATE TABLE IF NOT EXISTS users
 	ON DELETE SET NULL
 );
 
--- Create assets table (for superposable images)
-CREATE TABLE IF NOT EXISTS assets
+-- Create stickers table (pour les images superposables)
+CREATE TABLE IF NOT EXISTS stickers
 (
 	id INT AUTO_INCREMENT PRIMARY KEY,
 	name VARCHAR(255) NOT NULL,
@@ -40,46 +40,56 @@ CREATE TABLE IF NOT EXISTS assets
 	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Create images table
-CREATE TABLE IF NOT EXISTS images
+-- Create photos table (remplace la table images pour l'édition)
+CREATE TABLE IF NOT EXISTS photos
 (
 	id INT AUTO_INCREMENT PRIMARY KEY,
 	user_id INT NOT NULL,
 	file_path VARCHAR(255) NOT NULL,
+	thumbnail_path VARCHAR(255) NOT NULL,
+	is_gif BOOLEAN DEFAULT FALSE,
 	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	FOREIGN KEY (user_id) REFERENCES users(id)
 	ON DELETE CASCADE
 );
 
--- Create likes table
+-- Create likes table (référence maintenant la table photos)
 CREATE TABLE IF NOT EXISTS likes
 (
 	id INT AUTO_INCREMENT PRIMARY KEY,
-	image_id INT NOT NULL,
+	photo_id INT NOT NULL,
 	user_id INT NOT NULL,
 	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-	FOREIGN KEY (image_id) REFERENCES images(id)
+	FOREIGN KEY (photo_id) REFERENCES photos(id)
 	ON DELETE CASCADE,
 	FOREIGN KEY (user_id) REFERENCES users(id)
 	ON DELETE CASCADE,
-	UNIQUE KEY unique_like (image_id, user_id)
+	UNIQUE KEY unique_like (photo_id, user_id)
 );
 
--- Create comments table
+-- Create comments table (référence maintenant la table photos)
 CREATE TABLE IF NOT EXISTS comments
 (
 	id INT AUTO_INCREMENT PRIMARY KEY,
-	image_id INT NOT NULL,
+	photo_id INT NOT NULL,
 	user_id INT NOT NULL,
 	comment_text TEXT NOT NULL,
 	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-	FOREIGN KEY (image_id) REFERENCES images(id)
+	FOREIGN KEY (photo_id) REFERENCES photos(id)
 	ON DELETE CASCADE,
 	FOREIGN KEY (user_id) REFERENCES users(id)
 	ON DELETE CASCADE
 );
 
--- Insert default avatars (adjust paths according to your structure)
+-- Insert default avatars
 INSERT INTO avatars (name, file_path) VALUES
 ('Avatar_1', '/assets/avatars/avatar_1.png'),
 ('Avatar_2', '/assets/avatars/avatar_2.png');
+
+-- Insert default stickers
+INSERT INTO stickers (name, file_path) VALUES
+('Désolé', '/assets/stickers/desole.png'),
+('Help me', '/assets/stickers/aide-moi.png'),
+('Café', '/assets/stickers/cafe.png'),
+('Notation', '/assets/stickers/notation.png');
+

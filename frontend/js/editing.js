@@ -373,7 +373,7 @@ function startDrag(e)
 		selectedStickers[index].x = Math.max(0, Math.min(100, x));
 		selectedStickers[index].y = Math.max(0, Math.min(100, y));
 
-		// Met à jour la position
+		// Met à jour directement la position du sticker en tenant compte de sa taille
 		img.style.left = `${selectedStickers[index].x - selectedStickers[index].size/2}%`;
 		img.style.top = `${selectedStickers[index].y - selectedStickers[index].size/2}%`;
 	}

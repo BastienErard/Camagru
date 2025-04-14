@@ -14,6 +14,8 @@ services:
     volumes:
       - ./backend:/app
       - /app/node_modules
+      - uploads_data:/app/uploads
+      - ./frontend/assets:/app/assets
     depends_on:
       db:
         condition: service_healthy
@@ -38,6 +40,7 @@ services:
       - .env
     volumes:
       - ./frontend:/usr/share/nginx/html
+      - uploads_data:/usr/share/nginx/html/uploads
     depends_on:
       backend:
         condition: service_healthy
@@ -89,3 +92,4 @@ networks:
 
 volumes:
   db_data:
+  uploads_data:

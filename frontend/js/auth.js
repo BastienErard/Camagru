@@ -116,7 +116,7 @@ let successMessageTimerAuth = null;
 function	hideAllMessages()
 {
 	// Effacer les timers existants
-	if (errorMessageTimerAuthAuth)
+	if (errorMessageTimerAuth)
 	{
 		clearTimeout(errorMessageTimerAuth);
 		errorMessageTimerAuth = null;

@@ -49,6 +49,9 @@ footer .container-fluid
 {
 	position: relative;
 	overflow: hidden;
+	aspect-ratio: 4/3;
+	max-width: 100%;
+	margin: 0 auto;
 }
 
 #stickersPreview
@@ -67,7 +70,48 @@ footer .container-fluid
 	position: absolute;
 	pointer-events: all;
 	transform-origin: center;
+	transform: scaleX(-1) rotate(0deg);  /* Annule l'effet miroir du conteneur */
 	cursor: move;
+	z-index: 20;
+	user-select: none;
+}
+
+/* Style pour le sticker actuellement sélectionné */
+.selected-sticker-active
+{
+	border: 2px dashed #007bff !important;
+	box-shadow: 0 0 8px rgba(0, 123, 255, 0.5);
+}
+
+/* Style pour le point de rotation */
+.rotation-point
+{
+	position: absolute;
+	width: 16px;
+	height: 16px;
+	background-color: #fff;
+	border: 2px solid #007bff;
+	border-radius: 50%;
+	cursor: grab;
+	top: -8px;
+	right: -8px;
+	z-index: 100;
+	visibility: visible;
+	box-shadow: 0 0 4px rgba(0, 123, 255, 0.7);
+}
+
+
+/* Affiche le point de rotation uniquement pour le sticker sélectionné */
+.selected-sticker-active .rotation-point
+{
+	background-color: #007bff;
+	border-color: #fff;
+}
+
+.rotation-point:hover
+{
+	background-color: #007bff;
+	transform: scale(1.1);
 }
 
 #canvas
@@ -104,7 +148,106 @@ footer .container-fluid
 	opacity: 1;
 }
 
-#video, #stickersPreview
+#video
 {
 	transform: scaleX(-1);
+}
+
+#stickersPreview
+{
+	transform: scaleX(-1);  /* Garde le même effet miroir que la vidéo */
+}
+
+.card-body
+{
+	max-height: 500px;
+	overflow-y: auto;
+}
+
+@media (min-width: 992px)
+{
+	.card-body
+	{
+		max-height: calc(100vh - 300px);
+	}
+}
+
+.lightbox
+{
+	display: none;
+	position: fixed;
+	z-index: 1000;
+	left: 0;
+	top: 0;
+	width: 100%;
+	height: 100%;
+	background-color: rgba(0,0,0,0.9);
+}
+
+.lightbox-content
+{
+	position: relative;
+	margin: auto;
+	padding: 0;
+	width: 90%;
+	max-width: 1000px;
+	height: 90%;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+.lightbox-content img
+{
+	max-width: 100%;
+	max-height: 100%;
+	object-fit: contain;
+}
+
+.close-lightbox
+{
+	position: absolute;
+	top: 10px;
+	right: 20px;
+	color: white;
+	font-size: 35px;
+	font-weight: bold;
+	cursor: pointer;
+}
+
+.rotation-handle
+{
+	position: absolute;
+	width: 30px;
+	height: 30px;
+	background-color: rgba(0, 123, 255, 0.9);
+	border: 3px solid white;
+	border-radius: 50%;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	top: -15px;
+	right: -15px;
+	cursor: grab;
+	z-index: 999; /* Valeur très élevée pour s'assurer qu'il est au-dessus de tout */
+	box-shadow: 0 0 8px rgba(0, 0, 0, 0.7);
+	font-size: 18px;
+	color: white;
+}
+
+.rotation-handle::before
+{
+	content: "↻";
+	color: white;
+	font-weight: bold;
+}
+
+.rotation-handle:hover
+{
+	transform: scale(1.1);
+}
+
+.rotation-handle:active
+{
+	cursor: grabbing;
 }

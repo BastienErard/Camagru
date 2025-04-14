@@ -9,7 +9,7 @@
 //##############################################################################################\\
 
 const db = require('../../services/database');
-const  cessor = require('../../services/imageProcessor');
+const imageProcessor = require('../../services/imageProcessor');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
@@ -166,8 +166,8 @@ async function savePhoto(req, res)
 		const thumbnailName = `thumb_${fileName}`;
 
 		// Définit les chemins des fichiers
-		const uploadDir = path.join(__dirname, '../../../frontend/uploads/photos');
-		const thumbnailDir = path.join(__dirname, '../../../frontend/uploads/thumbnails');
+		const uploadDir = path.join(__dirname, '../../uploads/photos');
+		const thumbnailDir = path.join(__dirname, '../../uploads/thumbnails');
 
 		// Crée les répertoires s'ils n'existent pas
 		if (!fs.existsSync(uploadDir))
@@ -202,8 +202,19 @@ async function savePhoto(req, res)
 				if (stickerResult.length === 0)
 					throw new Error(`Sticker avec l'ID ${sticker.id} non trouvé`);
 
+				const relativeFilePath = stickerResult[0].file_path.startsWith('/')
+					? stickerResult[0].file_path.substring(1)
+					: stickerResult[0].file_path;
+
 				// Chemin absolu du sticker
-				const stickerPath = path.join(__dirname, '../../../frontend', stickerResult[0].file_path);
+				const stickerPath = path.join(__dirname, '../../assets', relativeFilePath.replace('assets/', ''));
+
+				// Vérifier si le fichier existe
+				if (!fs.existsSync(stickerPath))
+				{
+					console.error(`Le fichier sticker n'existe pas: ${stickerPath}`);
+					throw new Error(`Le sticker ${sticker.id} est introuvable sur le serveur`);
+				}
 
 				return {
 					path: stickerPath,
@@ -310,8 +321,8 @@ async function deletePhoto(req, res)
 		const photo = photos[0];
 
 		// Prend le chemin d'accès au fichier et sa miniature
-		const filePath = path.join(__dirname, '../../../frontend', photo.file_path);
-		const thumbnailPath = path.join(__dirname, '../../../frontend', photo.thumbnail_path);
+		const filePath = path.join(__dirname, '../../uploads', photo.file_path.replace('/uploads', ''));
+		const thumbnailPath = path.join(__dirname, '../../uploads', photo.thumbnail_path.replace('/uploads', ''));
 
 		// Supprime le fichier principal s'il existe
 		if (fs.existsSync(filePath))
@@ -395,8 +406,8 @@ async function createGif(req, res)
 		const thumbnailName = `thumb_${fileName.replace('.gif', '.png')}`;
 
 		// Définit les chemins des fichiers
-		const uploadDir = path.join(__dirname, '../../../frontend/uploads/photos');
-		const thumbnailDir = path.join(__dirname, '../../../frontend/uploads/thumbnails');
+		const uploadDir = path.join(__dirname, '../../uploads/photos');
+		const thumbnailDir = path.join(__dirname, '../../uploads/thumbnails');
 
 		// Crée les répertoires s'ils n'existent pas
 		if (!fs.existsSync(uploadDir))
@@ -431,8 +442,19 @@ async function createGif(req, res)
 
 				if (stickerResult.length > 0)
 				{
+					const relativeFilePath = stickerResult[0].file_path.startsWith('/')
+						? stickerResult[0].file_path.substring(1)
+						: stickerResult[0].file_path;
+
 					// Chemin absolu du sticker
-					const stickerPath = path.join(__dirname, '../../../frontend', stickerResult[0].file_path);
+					const stickerPath = path.join(__dirname, '../../assets', relativeFilePath.replace('assets/', ''));
+
+					// Vérifier si le fichier existe
+					if (!fs.existsSync(stickerPath))
+					{
+						console.error(`Le fichier sticker n'existe pas: ${stickerPath}`);
+						throw new Error(`Le sticker ${sticker.id} est introuvable sur le serveur`);
+					}
 
 					stickerObjets.push({
 						path: stickerPath,

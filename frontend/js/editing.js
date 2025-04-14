@@ -24,11 +24,12 @@ let captureBtn = document.getElementById('captureBtn');
 let toggleCameraBtn = document.getElementById('toggleCameraBtn');
 let switchCameraBtn = document.getElementById('switchCameraBtn');
 let imageUpload = document.getElementById('imageUpload');
-let ctx = canvas.getContext('2d');
+let ctx = canvas.getContext('2d', { willReadFrequently: true });
 let stream = null;
 let currentCameraIndex = 0;
 let availableCameras = [];
 let cameraActive = false;
+let labelListener = false;
 
 // Variables pour les stickers
 let stickersContainer = document.getElementById('stickersContainer');
@@ -38,6 +39,13 @@ let stickers = [];
 let stickerSize = document.getElementById('stickerSize');
 let stickerSizeValue = document.getElementById('stickerSizeValue');
 const MAX_STICKERS = 3;
+
+// Variable pour suivre le sticker actuellement sélectionné
+let currentSelectedSticker = null;
+
+// Variables pour la rotation
+let isRotating = false;
+let rotationOrigin = { x: 0, y: 0 };
 
 // Variables pour la création de GIF
 let createGifCheckbox = document.getElementById('createGifCheckbox');
@@ -53,6 +61,7 @@ let userPhotosContainer = document.getElementById('userPhotos');
 let loadingPhotos = document.getElementById('loadingPhotos');
 let noPhotosMessage = document.getElementById('noPhotosMessage');
 
+// Vérifie que l'utilisateur est connecté
 async function checkAuthentication()
 {
 	if (!window.authState || !window.authState.isAuthenticated)
@@ -150,6 +159,8 @@ async function toggleCamera()
 		video.srcObject = null;
 		toggleCameraBtn.innerHTML = 'Activer la caméra';
 		cameraActive = false;
+
+		createGifCheckbox.disabled = true;
 	}
 	else
 	{
@@ -158,6 +169,19 @@ async function toggleCamera()
 		{
 			toggleCameraBtn.innerHTML = 'Désactiver la caméra';
 			cameraActive = true;
+
+			// Supprime l'image téléchargée si présente
+			const existingImg = document.getElementById('uploadedImagePreview');
+			if (existingImg)
+				existingImg.remove();
+
+			video.style.display = 'block';
+
+			// Réinitialise l'input file
+			imageUpload.value = '';
+			document.querySelector('label[for="imageUpload"]').textContent = 'Ou télécharger une image';
+
+			createGifCheckbox.disabled = false;
 		}
 	}
 }
@@ -289,6 +313,13 @@ function displayStickers()
 				selectedStickers.splice(existingIndex, 1);
 				img.style.opacity = '0.7';
 				img.classList.remove('sticker-selected');
+
+				// Si le sticker supprimé était celui sélectionné, réinitialiser currentSelectedSticker
+				if (currentSelectedSticker === existingIndex)
+					currentSelectedSticker = null;
+				// Si le sticker supprimé était avant celui sélectionné, ajuster l'index
+				else if (currentSelectedSticker !== null && currentSelectedSticker > existingIndex)
+					currentSelectedSticker--;
 			}
 			else
 			{
@@ -299,9 +330,17 @@ function displayStickers()
 					name: sticker.name,
 					x: 50,
 					y: 50,
-					size: parseInt(stickerSize.value),
+					size: 30,
 					rotation: 0
 				});
+
+				// Définir le nouveau sticker comme sticker actif
+				currentSelectedSticker = selectedStickers.length - 1;
+
+				// Mettre à jour l'interface
+				stickerSize.value = 30;
+				stickerSizeValue.textContent = "30%";
+
 				img.style.opacity = '1';
 				img.classList.add('sticker-selected');
 			}
@@ -320,62 +359,160 @@ function updateStickersPreview()
 	stickersPreview.innerHTML = '';
 
 	if (selectedStickers.length === 0)
+	{
+		currentSelectedSticker = null;
 		return;
+	}
 
 	selectedStickers.forEach((sticker, index) => {
 		const stickerImg = document.createElement('img');
 		stickerImg.src = sticker.file_path;
 		stickerImg.alt = sticker.name;
 		stickerImg.className = 'selected-sticker';
+
+		if (currentSelectedSticker === index)
+			stickerImg.classList.add('selected-sticker-active');
+
 		stickerImg.style.width = `${sticker.size}%`;
 		stickerImg.style.left = `${sticker.x - sticker.size/2}%`;
 		stickerImg.style.top = `${sticker.y - sticker.size/2}%`;
-		stickerImg.style.transform = `rotate(${sticker.rotation}deg)`;
+		stickerImg.style.transform = `scaleX(-1) rotate(${sticker.rotation}deg)`;
 		stickerImg.dataset.index = index;
 
-		// Drag and drop pour déplacer le sticker
-		stickerImg.addEventListener('mousedown', startDrag);
+		// Ajoute le point de rotation
+		const rotationHandle = document.createElement('div');
+		rotationHandle.className = 'rotation-handle';
+		rotationHandle.title = 'Faire pivoter';
 
-		// Double-clic pour ouvrir le menu de rotation
-		stickerImg.addEventListener('dblclick', function(e) {
+		// Ajoute à l'image
+		stickerImg.appendChild(rotationHandle);
+
+		// Gestion du point de rotation
+		rotationHandle.addEventListener('mousedown', function(e) {
 			e.preventDefault();
-			const degrees = prompt(`Rotation du sticker "${sticker.name}" (en degrés):`, sticker.rotation);
-			if (degrees !== null) {
-				const deg = parseInt(degrees) || 0;
-				selectedStickers[index].rotation = deg;
+			e.stopPropagation();
+			startStickerRotation(e, index);
+		});
+
+		// Gestion du clic sur le sticker
+		stickerImg.addEventListener('mousedown', function(e) {
+			if (e.target !== rotationHandle)
+			{
+				currentSelectedSticker = index;
+				updateStickersPreview();
+				startDrag(e, index);
+			}
+		});
+
+		// Clic pour sélectionner le sticker
+		stickerImg.addEventListener('click', function(e) {
+			if (e.target !== rotationHandle)
+			{
+				e.stopPropagation();
+				currentSelectedSticker = index;
+				stickerSize.value = sticker.size;
+				stickerSizeValue.textContent = `${sticker.size}%`;
 				updateStickersPreview();
 			}
 		});
 
 		stickersPreview.appendChild(stickerImg);
 	});
+
+	// Désélectionner quand on clique sur le fond
+	stickersPreview.addEventListener('click', function(e) {
+		if (e.target === stickersPreview)
+		{
+			currentSelectedSticker = null;
+			updateStickersPreview();
+		}
+	});
+}
+
+// Fonction pour faire pivoter les stickers
+function startStickerRotation(e, index)
+{
+	e.preventDefault();
+	e.stopPropagation();
+
+	// Sélectionne le sticker
+	currentSelectedSticker = index;
+	updateStickersPreview();
+
+	const sticker = selectedStickers[index];
+	const stickerElement = document.querySelector(`.selected-sticker[data-index="${index}"]`);
+	const containerRect = stickersPreview.getBoundingClientRect();
+
+	// Calcule le centre du sticker
+	const centerX = containerRect.left + (containerRect.width * sticker.x / 100);
+	const centerY = containerRect.top + (containerRect.height * sticker.y / 100);
+
+	// Angle initial
+	const initialAngle = Math.atan2(
+		e.clientY - centerY,
+		e.clientX - centerX
+	) * (180 / Math.PI);
+
+	// Rotation initiale
+	const initialRotation = sticker.rotation;
+
+	function onMouseMove(e)
+	{
+		// Calcul du nouvel angle
+		const newAngle = Math.atan2(
+			e.clientY - centerY,
+			e.clientX - centerX
+		) * (180 / Math.PI);
+
+		// Différence d'angle
+		const angleDiff = newAngle - initialAngle;
+
+		// Appliquer la nouvelle rotation
+		sticker.rotation = initialRotation + angleDiff;
+
+		// Mettre à jour l'affichage
+		stickerElement.style.transform = `scaleX(-1) rotate(${sticker.rotation}deg)`;
+	}
+
+	function onMouseUp()
+	{
+		document.removeEventListener('mousemove', onMouseMove);
+		document.removeEventListener('mouseup', onMouseUp);
+	}
+
+	document.addEventListener('mousemove', onMouseMove);
+	document.addEventListener('mouseup', onMouseUp);
 }
 
 // Gestion du drag and drop pour les stickers
-function startDrag(e)
+function startDrag(e, index)
 {
 	e.preventDefault();
 
-	const img = e.target;
-	const index = parseInt(img.dataset.index);
+	// Assure que l'index est défini
+	const stickerIndex = (index !== undefined) ? index : parseInt(e.target.dataset.index);
 
 	// Récupère les dimensions du conteneur
 	const containerRect = stickersPreview.getBoundingClientRect();
 
-	// Fonction de déplacement
 	function moveAt(clientX, clientY)
 	{
 		// Calcule la position relative en pourcentage
-		const x = ((clientX - containerRect.left) / containerRect.width) * 100;
+		// Inversion de l'axe X pour l'effet miroir
+		const x = 100 - ((clientX - containerRect.left) / containerRect.width) * 100;
 		const y = ((clientY - containerRect.top) / containerRect.height) * 100;
 
 		// Limite la position pour que le sticker ne sorte pas du cadre
-		selectedStickers[index].x = Math.max(0, Math.min(100, x));
-		selectedStickers[index].y = Math.max(0, Math.min(100, y));
+		selectedStickers[stickerIndex].x = Math.max(0, Math.min(100, x));
+		selectedStickers[stickerIndex].y = Math.max(0, Math.min(100, y));
 
-		// Met à jour directement la position du sticker en tenant compte de sa taille
-		img.style.left = `${selectedStickers[index].x - selectedStickers[index].size/2}%`;
-		img.style.top = `${selectedStickers[index].y - selectedStickers[index].size/2}%`;
+		// Met à jour la position dans le DOM
+		const img = document.querySelector(`.selected-sticker[data-index="${stickerIndex}"]`);
+		if (img)
+		{
+			img.style.left = `${selectedStickers[stickerIndex].x - selectedStickers[stickerIndex].size/2}%`;
+			img.style.top = `${selectedStickers[stickerIndex].y - selectedStickers[stickerIndex].size/2}%`;
+		}
 	}
 
 	function onMouseMove(e)
@@ -383,11 +520,14 @@ function startDrag(e)
 		moveAt(e.clientX, e.clientY);
 	}
 
-	document.addEventListener('mousemove', onMouseMove);
-
-	document.addEventListener('mouseup', function() {
+	function onMouseUp()
+	{
 		document.removeEventListener('mousemove', onMouseMove);
-	}, { once: true });
+		document.removeEventListener('mouseup', onMouseUp);
+	}
+
+	document.addEventListener('mousemove', onMouseMove);
+	document.addEventListener('mouseup', onMouseUp, { once: true });
 }
 
 // Charge les photos de l'utilisateur
@@ -458,7 +598,10 @@ function displayUserPhotos(photos)
 
 		// Ajouter l'événement de clic pour voir l'image en grand
 		img.addEventListener('click', () => {
-			window.open(photo.file_path, '_blank');
+			const lightbox = document.getElementById('lightbox');
+			const lightboxImg = document.getElementById('lightbox-img');
+			lightboxImg.src = photo.file_path;
+			lightbox.style.display = 'flex';
 		});
 
 		// Ajouter l'événement de clic pour supprimer l'image
@@ -474,34 +617,64 @@ function displayUserPhotos(photos)
 // Supprime une photo
 async function deletePhoto(photoId)
 {
-	if (!confirm('Êtes-vous sûr de vouloir supprimer cette photo ?'))
-		return;
+	// Crée une confirmation inline
+	const photoElement = document.querySelector(`[data-photo-id="${photoId}"]`).closest('.position-relative');
 
-	try
-	{
-		const response = await fetch(`${EDITING_API_URL}/photos/${photoId}`, {
-			method: 'DELETE',
-			...editingFetchOptions
+	// Sauvegarde l'état original
+	const originalHTML = photoElement.innerHTML;
+
+	// Remplace par la confirmation
+	photoElement.innerHTML = `
+		<div class="confirmation-delete p-2 text-center">
+			<p class="small mb-2">Supprimer?</p>
+			<div class="d-flex justify-content-between">
+				<button class="btn btn-sm btn-secondary btn-cancel">Non</button>
+				<button class="btn btn-sm btn-danger btn-confirm">Oui</button>
+			</div>
+		</div>
+	`;
+
+	// Ajoute les écouteurs
+	photoElement.querySelector('.btn-cancel').addEventListener('click', () => {
+		photoElement.innerHTML = originalHTML;
+		// Réattache l'événement de suppression
+		photoElement.querySelector('.delete-thumbnail').addEventListener('click', (e) => {
+			e.stopPropagation();
+			deletePhoto(photoId);
 		});
+	});
 
-		if (!response.ok)
-			throw new Error('Erreur lors de la suppression de la photo');
-
-		const data = await response.json();
-
-		if (data.success)
+	photoElement.querySelector('.btn-confirm').addEventListener('click', async () => {
+		try
 		{
-			showSuccess('Photo supprimée avec succès');
-			loadUserPhotos();
+			const response = await fetch(`${EDITING_API_URL}/photos/${photoId}`, {
+				method: 'DELETE',
+				...editingFetchOptions
+			});
+
+			if (!response.ok)
+				throw new Error('Erreur lors de la suppression');
+
+			const data = await response.json();
+
+			if (data.success)
+			{
+				showSuccess('Photo supprimée avec succès');
+				loadUserPhotos();
+			}
+			else
+			{
+				showError(data.message || 'Impossible de supprimer la photo');
+				photoElement.innerHTML = originalHTML;
+			}
 		}
-		else
-			showError(data.message || 'Impossible de supprimer la photo');
-	}
-	catch (error)
-	{
-		console.error('Erreur:', error);
-		showError('Une erreur est survenue lors de la suppression de la photo');
-	}
+		catch (error)
+		{
+			console.error('Erreur:', error);
+			showError('Erreur lors de la suppression');
+			photoElement.innerHTML = originalHTML;
+		}
+	});
 }
 
 // Prend une photo avec la webcam ou via un téléchargement
@@ -517,6 +690,11 @@ async function capturePhoto()
 	// Vérifie s'il s'agit d'un GIF via la checkbox
 	if (createGifCheckbox.checked)
 	{
+		if (!cameraActive)
+		{
+			showError('La création de GIF nécessite une caméra active');
+			return;
+		}
 		await captureGif();
 		return;
 	}
@@ -528,15 +706,125 @@ async function capturePhoto()
 		return;
 	}
 
-	// En dernier recours, utilise la webcam avec une seule image
-	// CTX => contexte 2D du <canvas>
-	ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+	if (cameraActive)
+	{
+		canvas.width = video.videoWidth;
+		canvas.height = video.videoHeight;
 
-	// Transforme le canvas en une chaine Base64, tout en gardant la transparence
-	const imageData = canvas.toDataURL('image/png');
+		// Dessine sur le canvas
+		ctx.clearRect(0, 0, canvas.width, canvas.height);
+		ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-	// Envoie de l'image au serveur
-	await saveImage(imageData);
+		// Applique l'effet miroir
+		applyMirrorEffectToCanvas();
+
+		// Transforme le canvas en une chaine Base64
+		const imageData = canvas.toDataURL('image/png');
+
+		// Envoie au serveur
+		await saveImage(imageData);
+	}
+}
+
+// Applique l'effet miroir au canvas pour correspondre à la prévisualisation
+function applyMirrorEffectToCanvas()
+{
+	ctx.save();
+
+	// Création d'une copie de l'image actuelle
+	const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+	ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+	// Applique un effet miroir
+	ctx.scale(-1, 1);
+	ctx.translate(-canvas.width, 0);
+
+	// Création d'un canva temporaire
+	const tempCanvas = document.createElement('canvas');
+	tempCanvas.width = canvas.width;
+	tempCanvas.height = canvas.height;
+	const tempCtx = tempCanvas.getContext('2d', { willReadFrequently: true });
+	tempCtx.putImageData(imgData, 0, 0);
+
+	// Dessin sur le canva définitif
+	ctx.drawImage(tempCanvas, 0, 0);
+
+	ctx.restore();
+}
+
+// Fonction pour afficher le contenu du canvas sur la vidéo
+function displayCanvasOnVideo()
+{
+	// Crée une image temporaire pour afficher le canvas
+	const tempImg = document.createElement('img');
+	tempImg.src = canvas.toDataURL('image/png');
+	tempImg.style.width = '100%';
+	tempImg.style.height = '100%';
+	tempImg.style.objectFit = 'contain';
+	tempImg.id = 'uploadedImagePreview';
+
+	// Supprimer l'image précédente si elle existe
+	const existingImg = document.getElementById('uploadedImagePreview');
+	if (existingImg)
+		existingImg.remove();
+
+	// Ajouter l'image au conteneur vidéo
+	video.style.display = 'none';
+	videoContainer.insertBefore(tempImg, stickersPreview);
+}
+
+// Fonction pour prévisualiser l'image téléchargée
+function previewUploadedImage()
+{
+	const file = imageUpload.files[0];
+
+	if (!file)
+		return;
+
+	const reader = new FileReader();
+
+	reader.onload = function(e) {
+		const img = new Image();
+
+		img.onload = function() {
+			// Redimensionne l'image si nécessaire
+			const maxWidth = 640;
+			const maxHeight = 480;
+			let width = img.width;
+			let height = img.height;
+
+			if (width > maxWidth)
+			{
+				height = height * (maxWidth / width);
+				width = maxWidth;
+			}
+			if (height > maxHeight)
+			{
+				width = width * (maxHeight / height);
+				height = maxHeight;
+			}
+
+			// Définir les dimensions du canvas
+			canvas.width = width;
+			canvas.height = height;
+
+			// Dessiner l'image sur le canvas
+			ctx.clearRect(0, 0, canvas.width, canvas.height);
+			ctx.drawImage(img, 0, 0, width, height);
+
+			// Prévisualiser l'image sur la vidéo
+			displayCanvasOnVideo();
+
+			// Désactive le bouton de création de GIF si une image est téléchargée
+			createGifCheckbox.disabled = true;
+			createGifCheckbox.checked = false;
+			gifControls.classList.add('d-none');
+		};
+
+		img.src = e.target.result;
+	};
+
+	reader.readAsDataURL(file);
 }
 
 // Traite une image téléchargée par l'utilisateur
@@ -558,7 +846,8 @@ async function processUploadImage()
 			const img = new Image();
 
 			img.onload = async function() {
-				try {
+				try
+				{
 					// Redimensionne l'image si nécessaire
 					const maxWidth = 640;
 					const maxHeight = 480;
@@ -588,9 +877,14 @@ async function processUploadImage()
 					// Envoie l'image au serveur
 					await saveImage(imageData);
 
-					// Réinitialise l'input file
+					// Réinitialise complètement l'input file pour permettre de sélectionner le même fichier à nouveau
 					imageUpload.value = '';
 					document.querySelector('label[for="imageUpload"]').textContent = 'Ou télécharger une image';
+
+					// Supprimer la prévisualisation après sauvegarde
+					const existingImg = document.getElementById('uploadedImagePreview');
+					if (existingImg)
+						existingImg.remove();
 
 					resolve();
 				}
@@ -660,7 +954,7 @@ function validateNumericInput(input, min, max)
 	let value = parseInt(input.value);
 
 	// Si la valeur est inférieure au minimum
-	if (value < min)
+	if (value < min || isNaN(value))
 	{
 		input.value = min;
 		return min;
@@ -709,6 +1003,9 @@ async function captureGif()
 			// Dessine l'image sur le canvas
 			ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
+			// Applique l'effet miroir au canvas
+			applyMirrorEffectToCanvas();
+
 			// Convertit l'image en base 64
 			const imageData = canvas.toDataURL('image/png');
 
@@ -723,7 +1020,7 @@ async function captureGif()
 		// Convertit les stickers sélectionnés en format pour le backend
 		const stickerData = selectedStickers.map(sticker => ({
 			id: sticker.id,
-			x: sticker.x / 100, // Convertit le pourcentage en valeur entre 0 et 1
+			x: sticker.x / 100,
 			y: sticker.y / 100,
 			scale: sticker.size / 100,
 			rotation: sticker.rotation
@@ -752,7 +1049,6 @@ async function captureGif()
 		else
 			showError(data.message || 'Impossible de créer le GIF');
 
-		// Ces opérations sont exécutées même si une erreur se produit
 		gifProgressContainer.classList.add('d-none');
 		captureBtn.disabled = false;
 	}
@@ -761,14 +1057,61 @@ async function captureGif()
 		console.error('Erreur:', error);
 		showError('Une erreur est survenue lors de la création du GIF');
 
-		// Ces opérations sont exécutées même si une erreur se produit
 		gifProgressContainer.classList.add('d-none');
 		captureBtn.disabled = false;
 	}
 }
 
+// Fonction pour garantir que le bouton d'upload reste fonctionnel
+function ensureUploadButtonWorks()
+{
+	const uploadLabel = document.querySelector('label[for="imageUpload"]');
+	const uploadInput = document.getElementById('imageUpload');
+
+	// Vérification de l'existence des éléments
+	if (!uploadLabel || !uploadInput)
+	{
+		console.error("Éléments d'upload non trouvés dans le DOM");
+		return;
+	}
+
+	if (labelListener)
+		return;
+
+	// Variable pour éviter les clics multiples
+	let isProcessing = false;
+
+	// Recrée les écouteurs d'événements
+	uploadLabel.addEventListener('click', function(e) {
+		// Si un clic est déjà en cours de traitement, ignore celui-ci
+		if (isProcessing)
+		{
+			e.preventDefault();
+			e.stopPropagation();
+			return;
+		}
+
+		// Marque comme en cours de traitement
+		isProcessing = true;
+
+		// Empêche la propagation pour éviter les conflits
+		e.stopPropagation();
+
+		// Déclenche manuellement un clic sur l'input
+		uploadInput.click();
+
+		// Réinitialise l'état après un court délai
+		setTimeout(() => {
+			isProcessing = false;
+		}, 300);
+	});
+
+	labelListener = true;
+}
+
 // Initialisation des écouteurs d'événements
-document.addEventListener('DOMContentLoaded', async function() {
+document.addEventListener('DOMContentLoaded', async function()
+{
 	// Vérifie si l'utilisateur est authentifié
 	const isAuthenticated = await checkAuthentication();
 	if (!isAuthenticated)
@@ -788,20 +1131,30 @@ document.addEventListener('DOMContentLoaded', async function() {
 	toggleCameraBtn.addEventListener('click', toggleCamera);
 	switchCameraBtn.addEventListener('click', switchCamera);
 
+	ensureUploadButtonWorks();
+
 	// Événement pour le changement de taille du sticker
 	stickerSize.addEventListener('input', function() {
 		const value = stickerSize.value;
 		stickerSizeValue.textContent = `${value}%`;
 
-		// Met à jour la taille du dernier sticker sélectionné ou de tous les stickers
-		if (selectedStickers.length > 0)
+		// Met à jour la taille du sticker sélectionné uniquement
+		if (currentSelectedSticker !== null && selectedStickers[currentSelectedSticker])
 		{
-			// Si des stickers sont sélectionnés, met à jour leur taille
-			selectedStickers.forEach(sticker => {
-				sticker.size = parseInt(value);
-			});
+			selectedStickers[currentSelectedSticker].size = parseInt(value);
 			updateStickersPreview();
 		}
+	});
+
+	// Concerne la prévisualisation de l'image de la galerie
+	document.querySelector('.close-lightbox').addEventListener('click', () => {
+		document.getElementById('lightbox').style.display = 'none';
+	});
+
+	// Ferme dans le cas où on clique en dehors
+	document.getElementById('lightbox').addEventListener('click', (e) => {
+		if (e.target === document.getElementById('lightbox'))
+			document.getElementById('lightbox').style.display = 'none';
 	});
 
 	// Événement pour le téléchargement d'image
@@ -810,10 +1163,23 @@ document.addEventListener('DOMContentLoaded', async function() {
 		{
 			// Affiche le nom du fichier sélectionné
 			const fileName = imageUpload.files[0].name;
-			document.querySelector('label[for="imageUpload"]').textContent = `Image: ${fileName}`;
+			const uploadLabel = document.querySelector('label[for="imageUpload"]');
+			if (uploadLabel)
+				uploadLabel.textContent = `Image: ${fileName}`;
+
+			// Désactive la caméra si elle est active
+			if (cameraActive)
+				toggleCamera();
+
+			// Prévisualise l'image
+			previewUploadedImage();
 		}
 		else
-			document.querySelector('label[for="imageUpload"]').textContent = 'Ou télécharger une image';
+		{
+			const uploadLabel = document.querySelector('label[for="imageUpload"]');
+			if (uploadLabel)
+				uploadLabel.textContent = 'Ou télécharger une image';
+		}
 	});
 
 	frameCount.addEventListener('change', function() {

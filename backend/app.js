@@ -21,7 +21,9 @@ const PORT = process.env.BACKEND_PORT || 4000;
 
 // Middleware pour parser le corps des requêtes JSON
 app.use(cookieParser());
-app.use(express.json());
+// Augmentation de la limite de taille des requêtes pour permettre les images en base64
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(cors({
 	origin: `http://localhost:${process.env.FRONTEND_PORT}`,
 	credentials: true

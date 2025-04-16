@@ -19,18 +19,24 @@ async function saveImage(imageData, filePath)
 {
 	try
 	{
-		// Supprime le préfixe data:image/png;base64,
 		const base64Data = imageData.replace(/^data:image\/\w+;base64,/, '');
 		const buffer = Buffer.from(base64Data, 'base64');
 
-		// Crée le répertoire si nécessaire
-		const directory = path.dirname(filePath);
-		if (!fs.existsSync(directory))
-			fs.mkdirSync(directory, { recursive: true });
-
-		// Utilise Jimp pour traiter et sauvegarder l'image
 		const image = await Jimp.read(buffer);
-		await image.writeAsync(filePath);
+
+		const targetWidth = 640;
+		const targetHeight = 480;
+
+		// Crée une nouvelle image noire pour le fond
+		const newImage = new Jimp(targetWidth, targetHeight, '#000000'); // fond noir
+
+		// Redimensionne l'image pour s'adapter proportionnellement au canvas
+		image.contain(targetWidth, targetHeight, Jimp.HORIZONTAL_ALIGN_CENTER | Jimp.VERTICAL_ALIGN_MIDDLE);
+
+		// Composite l'image originale sur le fond noir pour centrer correctement
+		newImage.composite(image, 0, 0);
+
+		await newImage.writeAsync(filePath);
 
 		return filePath;
 	}
@@ -104,43 +110,46 @@ async function mergeImagesWithStickers(imageData, stickers)
 {
 	try
 	{
-		// Charge l'image principale
-		const image = await loadImage(imageData);
+		const base64Data = imageData.replace(/^data:image\/\w+;base64,/, '');
+		const buffer = Buffer.from(base64Data, 'base64');
+		let image = await Jimp.read(buffer);
+
+		const targetWidth = 640;
+		const targetHeight = 480;
+
+		// Nouvelle image avec fond noir pour garantir dimensions fixes
+		const finalImage = new Jimp(targetWidth, targetHeight, '#000000');
+
+		// Adapter image principale aux dimensions fixes en conservant proportions
+		image.contain(targetWidth, targetHeight, Jimp.HORIZONTAL_ALIGN_CENTER | Jimp.VERTICAL_ALIGN_MIDDLE);
+
+		// Fusionne l'image originale centrée sur l'image noire
+		finalImage.composite(image, 0, 0);
 
 		// Traite chaque sticker
 		for (const sticker of stickers)
 		{
-			// Charge le sticker
 			const stickerImage = await Jimp.read(sticker.path);
 
-			// Calcule les dimensions du sticker en fonction de l'échelle
-			const width = image.getWidth();
-			const height = image.getHeight();
-			const stickerWidth = Math.round(width * sticker.scale);
+			// Taille relative du sticker en fonction du canvas standardisé
+			const stickerWidth = Math.round(targetWidth * sticker.scale);
 			const stickerHeight = Math.round((stickerImage.getHeight() / stickerImage.getWidth()) * stickerWidth);
 
-			// Redimensionne le sticker
-			const resizedSticker = stickerImage.clone().resize(stickerWidth, stickerHeight);
-
-			// Calcule la position du sticker (centré sur le point x,y)
-			const x = Math.round(width * (1 - sticker.x) - stickerWidth / 2);
-			const y = Math.round(height * sticker.y - stickerHeight / 2);
-
-			// Applique la rotation si nécessaire
+			// Redimensionne et pivote le sticker selon paramètres
+			stickerImage.resize(stickerWidth, stickerHeight);
 			if (sticker.rotation !== 0)
-				resizedSticker.rotate(sticker.rotation);
+				stickerImage.rotate(sticker.rotation);
 
-			// Colle le sticker sur l'image
-			image.composite(resizedSticker, x, y, {
-				mode: Jimp.BLEND_SOURCE_OVER,
-				opacitySource: 1,
-				opacityDest: 1
-			});
+			// Calcul des coordonnées en tenant compte de l'effet miroir
+			const x = Math.round(targetWidth * (1 - sticker.x) - stickerWidth / 2);
+			const y = Math.round(targetHeight * sticker.y - stickerHeight / 2);
+
+			finalImage.composite(stickerImage, x, y);
 		}
 
 		// Convertit l'image fusionnée en base64
-		const buffer = await image.getBufferAsync(Jimp.MIME_PNG);
-		return `data:image/png;base64,${buffer.toString('base64')}`;
+		const finalBuffer = await finalImage.getBufferAsync(Jimp.MIME_PNG);
+		return `data:image/png;base64,${finalBuffer.toString('base64')}`;
 	}
 	catch (error)
 	{

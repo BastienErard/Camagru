@@ -374,8 +374,8 @@ function updateStickersPreview()
 			stickerImg.classList.add('selected-sticker-active');
 
 		stickerImg.style.width = `${sticker.size}%`;
-		stickerImg.style.left = `${sticker.x - sticker.size/2}%`;
-		stickerImg.style.top = `${sticker.y - sticker.size/2}%`;
+		stickerImg.style.left = `calc(${sticker.x}% - ${sticker.size / 2}%)`;
+		stickerImg.style.top = `calc(${sticker.y}% - ${sticker.size / 2}%)`;
 		stickerImg.style.transform = `scaleX(-1) rotate(${sticker.rotation}deg)`;
 		stickerImg.dataset.index = index;
 
@@ -777,53 +777,43 @@ function displayCanvasOnVideo()
 function previewUploadedImage()
 {
 	const file = imageUpload.files[0];
-
 	if (!file)
 		return;
 
 	const reader = new FileReader();
-
 	reader.onload = function(e) {
 		const img = new Image();
-
 		img.onload = function() {
-			// Redimensionne l'image si nécessaire
-			const maxWidth = 640;
-			const maxHeight = 480;
-			let width = img.width;
-			let height = img.height;
+			const canvasWidth = 640;
+			const canvasHeight = 480;
 
-			if (width > maxWidth)
-			{
-				height = height * (maxWidth / width);
-				width = maxWidth;
-			}
-			if (height > maxHeight)
-			{
-				width = width * (maxHeight / height);
-				height = maxHeight;
-			}
+			canvas.width = canvasWidth;
+			canvas.height = canvasHeight;
 
-			// Définir les dimensions du canvas
-			canvas.width = width;
-			canvas.height = height;
+			// Calcule l'échelle proportionnelle pour éviter les déformations
+			let scale = Math.min(canvasWidth / img.width, canvasHeight / img.height);
 
-			// Dessiner l'image sur le canvas
-			ctx.clearRect(0, 0, canvas.width, canvas.height);
-			ctx.drawImage(img, 0, 0, width, height);
+			// Calcule les coordonnées pour centrer l'image sur le canvas
+			let x = (canvasWidth / 2) - (img.width / 2) * scale;
+			let y = (canvasHeight / 2) - (img.height / 2) * scale;
 
-			// Prévisualiser l'image sur la vidéo
+			// Remplit le canvas en noir pour avoir des bandes noires autour si nécessaire
+			ctx.fillStyle = 'black';
+			ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+			// Dessine l'image centrée et redimensionnée proportionnellement
+			ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
+
+			// Affiche le canvas comme prévisualisation
 			displayCanvasOnVideo();
 
-			// Désactive le bouton de création de GIF si une image est téléchargée
+			// Désactive l'option GIF quand on utilise une image uploadée
 			createGifCheckbox.disabled = true;
 			createGifCheckbox.checked = false;
 			gifControls.classList.add('d-none');
 		};
-
 		img.src = e.target.result;
 	};
-
 	reader.readAsDataURL(file);
 }
 

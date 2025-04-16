@@ -879,7 +879,9 @@ async function processUploadImage()
 
 					// Réinitialise complètement l'input file pour permettre de sélectionner le même fichier à nouveau
 					imageUpload.value = '';
-					document.querySelector('label[for="imageUpload"]').textContent = 'Ou télécharger une image';
+					const uploadLabel = document.querySelector('label[for="imageUpload"]');
+					if (uploadLabel)
+						uploadLabel.childNodes[0].nodeValue = 'Ou télécharger une image ';
 
 					// Supprimer la prévisualisation après sauvegarde
 					const existingImg = document.getElementById('uploadedImagePreview');
@@ -1062,53 +1064,6 @@ async function captureGif()
 	}
 }
 
-// Fonction pour garantir que le bouton d'upload reste fonctionnel
-function ensureUploadButtonWorks()
-{
-	const uploadLabel = document.querySelector('label[for="imageUpload"]');
-	const uploadInput = document.getElementById('imageUpload');
-
-	// Vérification de l'existence des éléments
-	if (!uploadLabel || !uploadInput)
-	{
-		console.error("Éléments d'upload non trouvés dans le DOM");
-		return;
-	}
-
-	if (labelListener)
-		return;
-
-	// Variable pour éviter les clics multiples
-	let isProcessing = false;
-
-	// Recrée les écouteurs d'événements
-	uploadLabel.addEventListener('click', function(e) {
-		// Si un clic est déjà en cours de traitement, ignore celui-ci
-		if (isProcessing)
-		{
-			e.preventDefault();
-			e.stopPropagation();
-			return;
-		}
-
-		// Marque comme en cours de traitement
-		isProcessing = true;
-
-		// Empêche la propagation pour éviter les conflits
-		e.stopPropagation();
-
-		// Déclenche manuellement un clic sur l'input
-		uploadInput.click();
-
-		// Réinitialise l'état après un court délai
-		setTimeout(() => {
-			isProcessing = false;
-		}, 300);
-	});
-
-	labelListener = true;
-}
-
 // Initialisation des écouteurs d'événements
 document.addEventListener('DOMContentLoaded', async function()
 {
@@ -1130,8 +1085,6 @@ document.addEventListener('DOMContentLoaded', async function()
 	captureBtn.addEventListener('click', capturePhoto);
 	toggleCameraBtn.addEventListener('click', toggleCamera);
 	switchCameraBtn.addEventListener('click', switchCamera);
-
-	ensureUploadButtonWorks();
 
 	// Événement pour le changement de taille du sticker
 	stickerSize.addEventListener('input', function() {
@@ -1165,7 +1118,7 @@ document.addEventListener('DOMContentLoaded', async function()
 			const fileName = imageUpload.files[0].name;
 			const uploadLabel = document.querySelector('label[for="imageUpload"]');
 			if (uploadLabel)
-				uploadLabel.textContent = `Image: ${fileName}`;
+				uploadLabel.childNodes[0].nodeValue = `Image: ${fileName} `;
 
 			// Désactive la caméra si elle est active
 			if (cameraActive)
@@ -1178,7 +1131,7 @@ document.addEventListener('DOMContentLoaded', async function()
 		{
 			const uploadLabel = document.querySelector('label[for="imageUpload"]');
 			if (uploadLabel)
-				uploadLabel.textContent = 'Ou télécharger une image';
+				uploadLabel.childNodes[0].nodeValue = 'Ou télécharger une image ';
 		}
 	});
 

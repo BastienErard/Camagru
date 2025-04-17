@@ -374,9 +374,9 @@ function updateStickersPreview()
 			stickerImg.classList.add('selected-sticker-active');
 
 		stickerImg.style.width = `${sticker.size}%`;
-		stickerImg.style.left = `calc(${sticker.x}% - ${sticker.size / 2}%)`;
-		stickerImg.style.top = `calc(${sticker.y}% - ${sticker.size / 2}%)`;
-		stickerImg.style.transform = `scaleX(-1) rotate(${sticker.rotation}deg)`;
+		stickerImg.style.left = `${sticker.x}%`;
+		stickerImg.style.top = `${sticker.y}%`;
+		stickerImg.style.transform = `translate(-50%, -50%) scaleX(-1) rotate(${sticker.rotation}deg)`;
 		stickerImg.dataset.index = index;
 
 		// Ajoute le point de rotation
@@ -490,7 +490,7 @@ function startDrag(e, index)
 	e.preventDefault();
 
 	// Assure que l'index est défini
-	const stickerIndex = (index !== undefined) ? index : parseInt(e.target.dataset.index);
+	const stickerIndex = (index !== undefined) ? index : parseInt(e.target.dataset.index, 10);
 
 	// Récupère les dimensions du conteneur
 	const containerRect = stickersPreview.getBoundingClientRect();
@@ -510,8 +510,8 @@ function startDrag(e, index)
 		const img = document.querySelector(`.selected-sticker[data-index="${stickerIndex}"]`);
 		if (img)
 		{
-			img.style.left = `${selectedStickers[stickerIndex].x - selectedStickers[stickerIndex].size/2}%`;
-			img.style.top = `${selectedStickers[stickerIndex].y - selectedStickers[stickerIndex].size/2}%`;
+			img.style.left = `${selectedStickers[stickerIndex].x}%`;
+			img.style.top  = `${selectedStickers[stickerIndex].y}%`;
 		}
 	}
 
@@ -1051,6 +1051,20 @@ async function captureGif()
 		{
 			showSuccess('GIF créé avec succès');
 			loadUserPhotos();
+
+			// Réinitialise la sélection des stickers
+			selectedStickers = [];
+			currentSelectedSticker = null;
+
+			// Mets à jour l'affichage des stickers dans le conteneur
+			const stickerImgs = document.querySelectorAll('#stickersContainer img');
+			stickerImgs.forEach(img => {
+				img.style.opacity = '0.7';
+				img.classList.remove('sticker-selected');
+			});
+
+			// Mets à jour l'aperçu (vide les stickers de la prévisualisation)
+			updateStickersPreview();
 		}
 		else
 			showError(data.message || 'Impossible de créer le GIF');

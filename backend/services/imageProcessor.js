@@ -209,7 +209,7 @@ async function createGif(frames, outputPath, delay = 200, stickers = [])
 					const resizedSticker = stickerImage.clone().resize(stickerWidth, stickerHeight);
 
 					// Calcule la position du sticker (centré sur le point x,y)
-					const x = Math.round(width * sticker.x - stickerWidth / 2);
+					const x = Math.round(width * (1 - sticker.x) - stickerWidth / 2);
 					const y = Math.round(height * sticker.y - stickerHeight / 2);
 
 					// Applique la rotation si nécessaire

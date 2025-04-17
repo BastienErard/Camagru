@@ -69,8 +69,7 @@ footer .container-fluid
 {
 	position: absolute;
 	pointer-events: all;
-	transform-origin: center;
-	transform: scaleX(-1) rotate(0deg);  /* Annule l'effet miroir du conteneur */
+	transform-origin: center center;
 	cursor: move;
 	z-index: 20;
 	user-select: none;

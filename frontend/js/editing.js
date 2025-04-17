@@ -929,6 +929,20 @@ async function saveImage(imageData)
 		{
 			showSuccess('Image sauvegardée avec succès');
 			loadUserPhotos();
+
+			// Réinitialise la sélection des stickers
+			selectedStickers = [];
+			currentSelectedSticker = null;
+
+			// Mets à jour l'affichage des stickers dans le conteneur
+			const stickerImgs = document.querySelectorAll('#stickersContainer img');
+			stickerImgs.forEach(img => {
+				img.style.opacity = '0.7';
+				img.classList.remove('sticker-selected');
+			});
+
+			// Mets à jour l'aperçu (vide les stickers de la prévisualisation)
+			updateStickersPreview();
 		}
 		else
 			showError(data.message || 'Impossible de sauvegarder l\'image');

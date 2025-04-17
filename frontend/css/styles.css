@@ -82,37 +82,6 @@ footer .container-fluid
 	box-shadow: 0 0 8px rgba(0, 123, 255, 0.5);
 }
 
-/* Style pour le point de rotation */
-.rotation-point
-{
-	position: absolute;
-	width: 16px;
-	height: 16px;
-	background-color: #fff;
-	border: 2px solid #007bff;
-	border-radius: 50%;
-	cursor: grab;
-	top: -8px;
-	right: -8px;
-	z-index: 100;
-	visibility: visible;
-	box-shadow: 0 0 4px rgba(0, 123, 255, 0.7);
-}
-
-
-/* Affiche le point de rotation uniquement pour le sticker sélectionné */
-.selected-sticker-active .rotation-point
-{
-	background-color: #007bff;
-	border-color: #fff;
-}
-
-.rotation-point:hover
-{
-	background-color: #007bff;
-	transform: scale(1.1);
-}
-
 #canvas
 {
 	display: none;
@@ -212,41 +181,4 @@ footer .container-fluid
 	font-size: 35px;
 	font-weight: bold;
 	cursor: pointer;
-}
-
-.rotation-handle
-{
-	position: absolute;
-	width: 30px;
-	height: 30px;
-	background-color: rgba(0, 123, 255, 0.9);
-	border: 3px solid white;
-	border-radius: 50%;
-	display: flex;
-	justify-content: center;
-	align-items: center;
-	top: -15px;
-	right: -15px;
-	cursor: grab;
-	z-index: 999; /* Valeur très élevée pour s'assurer qu'il est au-dessus de tout */
-	box-shadow: 0 0 8px rgba(0, 0, 0, 0.7);
-	font-size: 18px;
-	color: white;
-}
-
-.rotation-handle::before
-{
-	content: "↻";
-	color: white;
-	font-weight: bold;
-}
-
-.rotation-handle:hover
-{
-	transform: scale(1.1);
-}
-
-.rotation-handle:active
-{
-	cursor: grabbing;
 }

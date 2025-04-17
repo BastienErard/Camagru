@@ -360,8 +360,8 @@ function updateStickersPreview()
 
 	if (selectedStickers.length === 0)
 	{
-		currentSelectedSticker = null;
-		return;
+	currentSelectedSticker = null;
+	return;
 	}
 
 	selectedStickers.forEach((sticker, index) => {
@@ -373,54 +373,37 @@ function updateStickersPreview()
 		if (currentSelectedSticker === index)
 			stickerImg.classList.add('selected-sticker-active');
 
+		// taille, position et rotation
 		stickerImg.style.width = `${sticker.size}%`;
 		stickerImg.style.left = `${sticker.x}%`;
 		stickerImg.style.top = `${sticker.y}%`;
 		stickerImg.style.transform = `translate(-50%, -50%) scaleX(-1) rotate(${sticker.rotation}deg)`;
 		stickerImg.dataset.index = index;
 
-		// Ajoute le point de rotation
-		const rotationHandle = document.createElement('div');
-		rotationHandle.className = 'rotation-handle';
-		rotationHandle.title = 'Faire pivoter';
-
-		// Ajoute à l'image
-		stickerImg.appendChild(rotationHandle);
-
-		// Gestion du point de rotation
-		rotationHandle.addEventListener('mousedown', function(e) {
-			e.preventDefault();
-			e.stopPropagation();
-			startStickerRotation(e, index);
-		});
-
-		// Gestion du clic sur le sticker
+		//  - Shift+glisser ou clic droit+glisser => rotation libre
+		//  - clic gauche + glisser => déplacement
 		stickerImg.addEventListener('mousedown', function(e) {
-			if (e.target !== rotationHandle)
-			{
-				currentSelectedSticker = index;
-				updateStickersPreview();
-				startDrag(e, index);
-			}
+			e.stopPropagation();
+			currentSelectedSticker = index;
+			updateStickersPreview();
+
+			// rotation
+			if (e.shiftKey || e.button === 2)
+			startStickerRotation(e, index);
+
+			// déplacement
+			else if (e.button === 0)
+			startDrag(e, index);
 		});
 
-		// Clic pour sélectionner le sticker
-		stickerImg.addEventListener('click', function(e) {
-			if (e.target !== rotationHandle)
-			{
-				e.stopPropagation();
-				currentSelectedSticker = index;
-				stickerSize.value = sticker.size;
-				stickerSizeValue.textContent = `${sticker.size}%`;
-				updateStickersPreview();
-			}
-		});
+		// empêche le menu contextuel sur clic droit
+		stickerImg.addEventListener('contextmenu', e => e.preventDefault());
 
 		stickersPreview.appendChild(stickerImg);
 	});
 
-	// Désélectionner quand on clique sur le fond
-	stickersPreview.addEventListener('click', function(e) {
+	// désélection quand on clique sur le fond
+	stickersPreview.addEventListener('click', e => {
 		if (e.target === stickersPreview)
 		{
 			currentSelectedSticker = null;
@@ -908,7 +891,7 @@ async function saveImage(imageData)
 			x: sticker.x / 100, // Convertit le pourcentage en valeur entre 0 et 1
 			y: sticker.y / 100,
 			scale: sticker.size / 100,
-			rotation: sticker.rotation
+			rotation: -sticker.rotation
 		}));
 
 		const response = await fetch(`${EDITING_API_URL}/save`, {
@@ -1029,7 +1012,7 @@ async function captureGif()
 			x: sticker.x / 100,
 			y: sticker.y / 100,
 			scale: sticker.size / 100,
-			rotation: sticker.rotation
+			rotation: -sticker.rotation
 		}));
 
 		const response = await fetch(`${EDITING_API_URL}/create-gif`, {

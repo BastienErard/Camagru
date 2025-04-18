@@ -454,7 +454,7 @@ function startStickerRotation(e, index)
 		sticker.rotation = initialRotation + angleDiff;
 
 		// Mettre à jour l'affichage
-		stickerElement.style.transform = `scaleX(-1) rotate(${sticker.rotation}deg)`;
+		stickerElement.style.transform = `translate(-50%, -50%) scaleX(-1) rotate(${sticker.rotation}deg)`;
 	}
 
 	function onMouseUp()

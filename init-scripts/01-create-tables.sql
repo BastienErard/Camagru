@@ -88,8 +88,8 @@ INSERT INTO avatars (name, file_path) VALUES
 
 -- Insert default stickers
 INSERT INTO stickers (name, file_path) VALUES
-('Désolé', '/assets/stickers/desole.png'),
+('Sorry', '/assets/stickers/desole.png'),
 ('Help me', '/assets/stickers/aide-moi.png'),
-('Café', '/assets/stickers/cafe.png'),
+('Coffee', '/assets/stickers/cafe.png'),
 ('Notation', '/assets/stickers/notation.png');
 

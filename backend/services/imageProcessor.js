@@ -135,14 +135,20 @@ async function mergeImagesWithStickers(imageData, stickers)
 			const stickerWidth = Math.round(targetWidth * sticker.scale);
 			const stickerHeight = Math.round((stickerImage.getHeight() / stickerImage.getWidth()) * stickerWidth);
 
-			// Redimensionne et pivote le sticker selon paramètres
+			// Redimensionne
 			stickerImage.resize(stickerWidth, stickerHeight);
+
+			// Applique la rotation
 			if (sticker.rotation !== 0)
 				stickerImage.rotate(sticker.rotation);
 
-			// Calcul des coordonnées en tenant compte de l'effet miroir
-			const x = Math.round(targetWidth * (1 - sticker.x) - stickerWidth / 2);
-			const y = Math.round(targetHeight * sticker.y - stickerHeight / 2);
+			// Récupère la taille réelle APRÈS rotation
+			const realW = stickerImage.bitmap.width;
+			const realH = stickerImage.bitmap.height;
+
+			// Centre avec ces dimensions
+			const x = Math.round(targetWidth * (1 - sticker.x) - realW / 2);
+			const y = Math.round(targetHeight * sticker.y - realH / 2);
 
 			finalImage.composite(stickerImage, x, y);
 		}

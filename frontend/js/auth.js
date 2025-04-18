@@ -58,7 +58,7 @@ function	updateUI()
 	{
 		menuDiv.innerHTML = `
 			<div class="d-flex align-items-center">
-				<a href="/gallery" class="btn btn-outline-light me-3">Galerie</a>
+				<a href="/" class="btn btn-outline-light me-3">Galerie</a>
 				<a href="/editing" class="btn btn-outline-light me-3">Edition</a>
 				<div class="dropdown">
 					<button class="btn btn-outline-light dropdown-toggle" type="button" id="userMenu" data-bs-toggle="dropdown" aria-expanded="false">
@@ -79,9 +79,12 @@ function	updateUI()
 	else
 	{
 		menuDiv.innerHTML = `
-			<button class="btn btn-outline-light" type="button" onclick="window.location.href='/login'">
-				Se connecter
-			</button>`;
+			<div class="d-flex align-items-center">
+				<a href="/" class="btn btn-outline-light me-3">Galerie</a>
+				<button class="btn btn-outline-light" type="button" onclick="window.location.href='/login'">
+					Se connecter
+				</button>
+			</div>`;
 	}
 }
 

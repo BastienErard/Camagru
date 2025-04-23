@@ -5,6 +5,19 @@
   <p>Une application web de capture et d'édition d'image</p>
 </div>
 
+## Table des matières
+- [Description](#description)
+- [Technologies utilisées](#️-technologies-utilisées)
+- [Architecture du projet](#-architecture-du-projet)
+- [Installation et lancement](#-installation-et-lancement)
+- [Fonctionnalités principales](#-fonctionnalités-principales)
+- [API REST et codes HTTP](#-api-rest-et-codes-http)
+- [Équivalences avec la bibliothèque standard PHP](#-équivalences-avec-la-bibliothèque-standard-php)
+- [Fonctionnalités bonus](#-fonctionnalités-bonus)
+- [Sécurité](#-sécurité)
+- [Améliorations possibles](#-améliorations-possibles)
+- [Auteur](#-auteur)
+
 ## Description
 
 Camagru est une application web de type Instagram permettant aux utilisateurs de prendre des photos avec leur webcam et d'y appliquer des filtres/stickers.
@@ -68,6 +81,23 @@ Ce projet a été développé dans le cadre du cursus de formation à l'école 4
 └── init-scripts                    # Scripts d'initialisation
     └── 01-create-tables.sql        # Création des tables SQL
 ```
+
+### Architecture serveur
+
+Le projet utilise une architecture à deux niveaux pour la partie serveur :
+
+1. **Express (Node.js)** fonctionne comme serveur d'API REST dans le conteneur backend :
+   - Traite toutes les requêtes `/api/*`
+   - Gère la logique métier et les interactions avec la base de données
+   - S'occupe du traitement des images et de la création de GIFs
+   - Implémente l'authentification et la sécurité
+
+2. **Nginx** sert de serveur web frontal dans le conteneur frontend :
+   - Sert les fichiers statiques (HTML, CSS, JavaScript, images)
+   - Agit comme proxy inverse pour rediriger les requêtes API vers Express
+   - Optimise la livraison du contenu statique
+
+Cette séparation des responsabilités permet une meilleure performance et facilite la maintenance. Les conteneurs communiquent via le réseau Docker, créant ainsi une architecture modulaire et évolutive.
 
 ## 🚀 Installation et lancement
 
@@ -145,15 +175,15 @@ docker-compose down
 
 ## 📋 API REST et codes HTTP
 
-L'API utilise les méthodes HTTP standard et renvoie les codes de statut appropriés :
+L'API utilise les méthodes HTTP standard et renvoie les codes de statut suivants :
 
 | Méthode | Endpoint | Description | Codes HTTP |
 |---------|----------|-------------|------------|
-| GET | `/api/auth/status` | Vérifier le statut d'authentification | 200, 401 |
-| POST | `/api/auth/login` | Connexion | 200, 400, 401, 500 |
+| GET | `/api/auth/status` | Vérifier le statut d'authentification | 200, 500 |
+| POST | `/api/auth/login` | Connexion | 200, 400, 500 |
 | POST | `/api/auth/register` | Inscription | 200, 400, 500 |
 | POST | `/api/auth/logout` | Déconnexion | 200, 500 |
-| GET | `/api/auth/verify/:token` | Vérifier l'email | 200, 400, 500 |
+| GET | `/api/auth/verify/:token` | Vérifier l'email | Redirection |
 | POST | `/api/auth/request-reset` | Demander réinitialisation de mot de passe | 200, 400, 500 |
 | POST | `/api/auth/reset-password` | Réinitialiser le mot de passe | 200, 400, 500 |
 | GET | `/api/profile/info` | Obtenir infos du profil | 200, 401, 500 |
@@ -173,11 +203,12 @@ L'API utilise les méthodes HTTP standard et renvoie les codes de statut appropr
 | POST | `/api/gallery/:id/comment` | Ajouter un commentaire | 200, 400, 401, 404, 500 |
 
 **Codes HTTP utilisés :**
-- `200`: Succès
-- `400`: Requête incorrecte (données manquantes ou invalides)
-- `401`: Non autorisé (authentification requise)
-- `404`: Ressource non trouvée
-- `500`: Erreur interne du serveur
+- `200`: Succès - La requête a été traitée avec succès
+- `400`: Requête incorrecte - Données manquantes ou invalides
+- `401`: Non autorisé - Authentification requise
+- `404`: Ressource non trouvée - L'élément demandé n'existe pas
+- `500`: Erreur interne du serveur - Problème côté serveur
+- `Redirection`: Redirection vers une autre page (utilisé notamment pour la vérification d'email)
 
 ## 🔄 Équivalences avec la bibliothèque standard PHP
 
@@ -191,7 +222,7 @@ Le projet utilise Node.js pour le backend, mais chaque fonctionnalité a un équ
 | fs (Manipulation de fichiers) | file_get_contents(), file_put_contents() |
 | Jimp (Manipulation d'images) | GD Library, Imagick |
 | Nodemailer (Envoi d'emails) | mail(), PHPMailer |
-| JWT (Authentification) | Sessions PHP, fonctions de cryptographie |
+| GIF-Encoder-2 (Création de GIFs) | Imagick, GD Animation |
 | Path (Manipulation de chemins) | dirname(), basename(), realpath() |
 | Cookie-parser (Gestion des cookies) | setcookie(), $_COOKIE |
 
@@ -213,7 +244,13 @@ Le projet utilise Node.js pour le backend, mais chaque fonctionnalité a un équ
 - Tokens d'authentification sécurisés
 - Expiration et nettoyage des tokens inutilisés
 
+## 🔧 Améliorations possibles
+
+- **Middleware d'authentification** : Implémenter un middleware Express centralisé pour vérifier l'authentification, plutôt que de répéter la logique de vérification dans chaque contrôleur. Cela réduirait la duplication de code et améliorerait la maintenabilité.
+- **Séparation des responsabilités** : Extraire davantage la logique métier des contrôleurs vers des services dédiés.
+- **ORM** : Utiliser un ORM comme Sequelize pour simplifier les interactions avec la base de données.
+- **Validation centralisée** : Créer un service de validation réutilisable pour les données entrantes.
+
 ## 👥 Auteur
 
 Développé par Bastien Erard pour le projet Camagru de l'école 42.
-

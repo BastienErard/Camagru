@@ -91,5 +91,40 @@ async function sendPasswordResetEmail(email, username, token)
 	}
 }
 
+// Fonction pour envoyer une notification de commentaire
+async function sendCommentNotification(email, username, photoOwnerUsername)
+{
+	try
+	{
+		const viewUrl = `http://localhost:${process.env.FRONTEND_PORT}/`;
+
+		const info = await transporter.sendMail({
+			from: `"Camagru" <${process.env.EMAIL_USER}>`,
+			to: email,
+			subject: 'Nouveau commentaire sur votre photo',
+			text: `Bonjour ${photoOwnerUsername},
+
+			${username} a commenté votre photo sur Camagru.
+			Pour voir le commentaire, rendez-vous sur la galerie : ${viewUrl}
+
+			Si vous ne souhaitez plus recevoir ces notifications, vous pouvez les désactiver dans les paramètres de votre profil.`,
+			html: `<p>Bonjour ${photoOwnerUsername},</p>
+			<p><strong>${username}</strong> a commenté votre photo sur Camagru.</p>
+			<p>Pour voir le commentaire, <a href="${viewUrl}" style="color: #007bff; text-decoration: underline;">rendez-vous sur la galerie</a>.</p>
+			<p>Si vous ne souhaitez plus recevoir ces notifications, vous pouvez les désactiver dans les paramètres de votre profil.</p>`
+		});
+
+		console.log('Email de notification envoyé: %s', info.messageId);
+		return true;
+	}
+	catch (error)
+	{
+		console.error('Erreur lors de l\'envoi de l\'email de notification:', error);
+		return false;
+	}
+}
+
+
 exports.sendVerificationEmail = sendVerificationEmail;
 exports.sendPasswordResetEmail = sendPasswordResetEmail;
+exports.sendCommentNotification = sendCommentNotification;

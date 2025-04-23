@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 	<head>
 		<meta charset="UTF-8">
 		<link rel="icon" href="media/favicon.ico" type="image/x-icon">
@@ -30,7 +30,105 @@
 			</nav>
 		</header>
 
-		<h1>Hello world</h1>
+		<main class="container py-4">
+			<h1 class="text-center mb-4">Galerie</h1>
+
+			<!-- Galerie de photos -->
+			<div class="row justify-content-center">
+				<div class="col-12 col-md-10 col-lg-8">
+					<div id="gallery" class="row g-4">
+						<!-- Les photos seront chargées dynamiquement ici -->
+						<div class="col-12 text-center" id="loading">
+							<div class="spinner-border text-primary" role="status">
+								<span class="visually-hidden">Chargement...</span>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</main>
+
+		<!-- Template pour les cartes de photos -->
+		<template id="photoCardTemplate">
+			<div class="col-12 mb-4">
+				<div class="card h-100 photo-card">
+					<div class="position-relative">
+						<img src="" alt="Photo utilisateur" class="card-img-top photo-img">
+						<div class="photo-info position-absolute bottom-0 start-0 w-100 bg-dark bg-opacity-75 text-white p-2">
+							<div class="d-flex justify-content-between align-items-center">
+								<div class="d-flex align-items-center">
+									<img src="" alt="Avatar" class="avatar-mini rounded-circle me-2">
+									<span class="username"></span>
+								</div>
+								<small class="photo-date"></small>
+							</div>
+						</div>
+					</div>
+					<div class="card-body">
+						<div class="d-flex justify-content-between align-items-center mb-3">
+							<div class="like-section">
+								<button class="btn btn-sm btn-outline-danger like-btn">
+									<svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16" class="like-icon">
+										<path d="m8 2.748-.717-.737C5.6.281 2.514.878 1.4 3.053c-.523 1.023-.641 2.5.314 4.385.92 1.815 2.834 3.989 6.286 6.357 3.452-2.368 5.365-4.542 6.286-6.357.955-1.886.838-3.362.314-4.385C13.486.878 10.4.28 8.717 2.01zM8 15C-7.333 4.868 3.279-3.04 7.824 1.143c.06.055.119.112.176.171a3.12 3.12 0 0 1 .176-.17C12.72-3.042 23.333 4.867 8 15"/>
+									</svg>
+									<span class="like-count">0</span>
+								</button>
+							</div>
+							<small class="text-muted comment-count">0 commentaires</small>
+						</div>
+
+						<!-- Alerte pour utilisateurs non connectés -->
+						<div class="alert alert-info auth-alert mb-3 d-none">
+							Vous devez être <a href="/login" class="alert-link">connecté</a> pour pouvoir liker ou commenter.
+						</div>
+
+						<!-- Section des commentaires -->
+						<div class="comments-section">
+							<div class="comments-list mb-3" style="max-height: 200px; overflow-y: auto;">
+								<!-- Les commentaires seront chargés ici -->
+							</div>
+
+							<!-- Bouton "Charger plus de commentaires" -->
+							<div class="text-center mb-3 load-more-comments-container d-none">
+								<button class="btn btn-sm btn-outline-secondary load-more-comments-btn">Voir plus de commentaires</button>
+							</div>
+
+							<!-- Formulaire d'ajout de commentaire -->
+							<form class="comment-form">
+								<div class="input-group">
+									<input type="text" class="form-control comment-input" placeholder="Ajouter un commentaire..." required>
+									<button type="submit" class="btn btn-primary">Envoyer</button>
+								</div>
+							</form>
+						</div>
+					</div>
+				</div>
+			</div>
+		</template>
+
+		<!-- Template pour un commentaire -->
+		<template id="commentTemplate">
+			<div class="comment mb-2">
+				<div class="d-flex">
+					<img src="" alt="Avatar" class="avatar-mini rounded-circle me-2" width="24" height="24">
+					<div class="comment-content">
+						<div class="d-flex align-items-baseline">
+							<strong class="comment-username me-2"></strong>
+							<small class="text-muted comment-date"></small>
+						</div>
+						<p class="comment-text mb-1"></p>
+					</div>
+				</div>
+			</div>
+		</template>
+
+		<!-- Lightbox pour afficher les photos en plein écran -->
+		<div id="lightbox" class="lightbox">
+			<span class="close-lightbox">&times;</span>
+			<div class="lightbox-content">
+				<img id="lightbox-img" alt="Photo en plein écran">
+			</div>
+		</div>
 
 		<footer>
 			<div class="container-fluid bg-dark text-light d-flex justify-content-center align-items-center">
@@ -38,7 +136,8 @@
 			</div>
 		</footer>
 
+		<script src="/js/bootstrap.bundle.min.js"></script>
+		<script src="/js/auth.js"></script>
+		<script src="/js/gallery.js"></script>
 	</body>
-	<script src="/js/bootstrap.bundle.min.js"></script>
-	<script src="/js/auth.js"></script>
 </html>

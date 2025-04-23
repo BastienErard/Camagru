@@ -33,9 +33,11 @@ app.use(cors({
 const authRoutes = require('./api/routes/authRoutes');
 const profileRoutes = require('./api/routes/profileRoutes');
 const editingRoutes = require('./api/routes/editingRoutes');
+const galleryRoutes = require('./api/routes/galleryRoutes');
 app.use('/api/auth', authRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/editing', editingRoutes);
+app.use('/api/gallery', galleryRoutes);
 
 // Servir les fichiers statiques si absence de Nginx
 app.use(express.static(path.join(__dirname, '../frontend')));

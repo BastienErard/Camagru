@@ -9,6 +9,7 @@ html, body
 body
 {
 	flex: 1;
+	background-color: #fafafa; /* Fond gris clair similaire à Instagram */
 }
 
 footer
@@ -126,20 +127,117 @@ footer .container-fluid
 	transform: scaleX(-1);  /* Garde le même effet miroir que la vidéo */
 }
 
-.card-body
+/* Styles pour la page principale (galerie) - Style Instagram */
+#gallery {
+	max-width: 100%;
+	margin: 0 auto;
+}
+
+.photo-card
 {
-	max-height: 500px;
+	transition: transform 0.1s;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+	border-radius: 3px;
+	margin-bottom: 20px;
+	background-color: #fff;
+}
+
+.photo-card:hover
+{
+	transform: translateY(-2px);
+	box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+}
+
+.photo-img
+{
+	width: 100%;
+	max-height: 600px;
+	object-fit: contain;
+	background-color: #000;
+	cursor: pointer;
+}
+
+.avatar-mini
+{
+	width: 30px;
+	height: 30px;
+	object-fit: cover;
+	border-radius: 50%;
+}
+
+.like-btn
+{
+	transition: all 0.2s;
+	border: none;
+	background: transparent;
+	padding: 4px 8px;
+}
+
+.like-btn.liked
+{
+	color: #ed4956; /* Rouge Instagram */
+	background-color: transparent;
+}
+
+.like-btn:hover
+{
+	background-color: rgba(0, 0, 0, 0.05);
+}
+
+.comment-form
+{
+	position: relative;
+	border-top: 1px solid #efefef;
+	padding-top: 10px;
+	margin-top: 10px;
+}
+
+.comments-list
+{
+	font-size: 0.9rem;
+	max-height: 200px;
 	overflow-y: auto;
 }
 
-@media (min-width: 992px)
+.comment
 {
-	.card-body
-	{
-		max-height: calc(100vh - 300px);
-	}
+	padding: 4px 0;
+	transition: background-color 0.2s;
 }
 
+.comment:hover
+{
+	background-color: #f8f9fa;
+}
+
+.comment-text
+{
+	margin-bottom: 0.25rem;
+	word-break: break-word;
+}
+
+.photo-info
+{
+	font-size: 0.9rem;
+	padding: 6px 12px;
+}
+
+.load-more-comments-btn
+{
+	font-size: 0.8rem;
+	color: #8e8e8e;
+	background: none;
+	border: none;
+	padding: 4px 0;
+	cursor: pointer;
+}
+
+.load-more-comments-btn:hover
+{
+	color: #262626;
+}
+
+/* Style pour la lightbox */
 .lightbox
 {
 	display: none;
@@ -181,4 +279,16 @@ footer .container-fluid
 	font-size: 35px;
 	font-weight: bold;
 	cursor: pointer;
+	z-index: 1001;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+	.photo-card {
+		margin-bottom: 12px;
+	}
+
+	.photo-img {
+		max-height: 400px;
+	}
 }

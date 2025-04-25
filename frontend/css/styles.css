@@ -292,3 +292,242 @@ footer .container-fluid
 		max-height: 400px;
 	}
 }
+
+/* Styles pour le menu responsive */
+.menu-btn
+{
+	display: flex;
+	align-items: center;
+	height: 38px;
+	padding: 0.375rem 0.75rem;
+	font-size: 1rem;
+	white-space: nowrap;
+}
+
+.menu-avatar
+{
+	width: 24px;
+	height: 24px;
+	object-fit: cover;
+}
+
+.menu-welcome
+{
+	display: inline;
+}
+
+.menu-username
+{
+	display: inline;
+	max-width: 120px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+/* Adaptations pour les petits écrans */
+@media (max-width: 767px)
+{
+	/* Styles pour les boutons du menu */
+	.menu-btn
+	{
+		padding: 0.25rem 0.5rem;
+		font-size: 0.875rem;
+		height: 32px;
+		margin-right: 0.5rem !important;
+	}
+
+	.menu-welcome
+	{
+		display: none;
+	}
+
+	.menu-avatar
+	{
+		width: 20px;
+		height: 20px;
+		margin-right: 0.25rem !important;
+	}
+
+	.menu-username
+	{
+		max-width: 80px;
+	}
+
+	/* Adaptations pour la navbar entière */
+	.navbar-logo
+	{
+		width: 30px;
+		height: 30px;
+	}
+
+	.navbar-brand
+	{
+		font-size: calc(1.3rem + 0.3vw);
+		margin-right: 0.5rem;
+	}
+
+	.navbar .container-fluid
+	{
+		padding-left: 0.5rem;
+		padding-right: 0.5rem;
+	}
+
+	#menu
+	{
+		margin-left: 0.5rem !important;
+	}
+}
+
+/* Très petits écrans */
+@media (max-width: 400px)
+{
+	.menu-username
+	{
+		max-width: 60px;
+	}
+
+	.navbar-logo
+	{
+		width: 25px;
+		height: 25px;
+	}
+
+	.navbar-brand
+	{
+		font-size: calc(1.1rem + 0.2vw);
+	}
+
+	.navbar .d-flex.align-items-center a
+	{
+		margin-right: 0.2rem !important;
+	}
+
+	.menu-btn
+	{
+		margin-right: 0.3rem !important;
+	}
+}
+
+/* Styles responsifs pour les boutons sur la page profil */
+@media (max-width: 767px)
+{
+	/* Réorganiser les boutons en colonne sur mobile */
+	#profileView .d-flex.justify-content-between,
+	#editProfileView .d-flex.justify-content-between,
+	#changePasswordView .d-flex.justify-content-between,
+	#deleteAccountView .d-flex.justify-content-between
+	{
+		flex-direction: column !important;
+		gap: 10px;
+	}
+
+	/* Boutons pleine largeur sur mobile */
+	#profileView .btn,
+	#editProfileView .btn,
+	#changePasswordView .btn,
+	#deleteAccountView .btn
+	{
+		width: 100%;
+	}
+
+	/* Ajuster les étiquettes et les champs en mode mobile */
+	.col-form-label
+	{
+		padding-bottom: 0.25rem;
+	}
+
+	/* Réorganiser les labels et les inputs sur mobile */
+	@media (max-width: 575px)
+	{
+		.mb-3.row
+		{
+			margin-bottom: 1rem !important;
+		}
+
+		/* Faire passer les labels au-dessus des champs plutôt qu'à côté */
+		.col-sm-4.col-form-label
+		{
+			text-align: left;
+			padding-bottom: 0.25rem;
+			margin-bottom: 0;
+		}
+
+		/* Adapter la taille de la galerie d'avatars */
+		#editAvatarGallery img.avatar-thumbnail
+		{
+			width: 50px;
+			height: 50px;
+		}
+	}
+}
+
+/* Sur mobile, ajuster le positionnement du footer */
+@media (max-width: 767px)
+{
+	/* Modifier la structure du corps de page pour que le footer reste en bas */
+	html, body
+	{
+		height: auto;
+		min-height: 100%;
+	}
+
+	body
+	{
+		display: flex;
+		flex-direction: column;
+		min-height: 100vh;
+	}
+
+	.container
+	{
+		flex: 1;
+	}
+
+	/* Transformer le footer fixe en footer normal qui reste en bas */
+	footer.fixed-bottom
+	{
+		position: relative !important;
+		margin-top: auto;
+	}
+
+	/* Réduire la hauteur du footer sur mobile */
+	footer .container-fluid
+	{
+		height: 50px;
+	}
+}
+
+.container
+{
+	padding-bottom: 60px; /* au moins la hauteur du footer */
+}
+@media (max-width: 767px)
+{
+	.container
+	{
+	padding-bottom: 50px; /* hauteur réduite sur mobile */
+	}
+}
+
+/* Masquer l’avatar sur les écrans très étroits (< 300px) */
+@media (max-width: 300px)
+{
+	/* avatar dans le menu (classe ajoutée par auth.js) */
+	.menu-avatar
+	{
+	display: none !important;
+	}
+	/* avatar sur la page de profil */
+	#avatarPreview
+	{
+	display: none !important;
+	}
+}
+
+#userPhotosWrapper
+{
+	max-height: 600px;
+	overflow-y: auto;
+	padding-right: 0.5rem;
+}

@@ -55,18 +55,17 @@ function	updateUI()
 	const menuDiv = document.getElementById('menu');
 
 	if (authState.isAuthenticated && authState.user)
-	{
+		{
 		menuDiv.innerHTML = `
 			<div class="d-flex align-items-center">
-				<a href="/" class="btn btn-outline-light me-3">Galerie</a>
-				<a href="/editing" class="btn btn-outline-light me-3">Edition</a>
+				<a href="/" class="btn btn-outline-light me-2 menu-btn">Galerie</a>
+				<a href="/editing" class="btn btn-outline-light me-2 menu-btn">Edition</a>
 				<div class="dropdown">
-					<button class="btn btn-outline-light dropdown-toggle" type="button" id="userMenu" data-bs-toggle="dropdown" aria-expanded="false">
+					<button class="btn btn-outline-light dropdown-toggle menu-btn" type="button" id="userMenu" data-bs-toggle="dropdown" aria-expanded="false">
 						<img src="${authState.user.avatar}"
 							alt="Avatar"
-							class="rounded-circle me-2"
-							style="width: 30px; height: 30px;">
-						Bienvenue ${authState.user.username}
+							class="rounded-circle me-1 menu-avatar">
+						<span class="menu-welcome">Bienvenue</span> <span class="menu-username">${authState.user.username}</span>
 					</button>
 					<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu">
 						<li><a class="dropdown-item" href="/profile">Profil</a></li>
@@ -80,8 +79,8 @@ function	updateUI()
 	{
 		menuDiv.innerHTML = `
 			<div class="d-flex align-items-center">
-				<a href="/" class="btn btn-outline-light me-3">Galerie</a>
-				<button class="btn btn-outline-light" type="button" onclick="window.location.href='/login'">
+				<a href="/" class="btn btn-outline-light me-2 menu-btn">Galerie</a>
+				<button class="btn btn-outline-light menu-btn" type="button" onclick="window.location.href='/login'">
 					Se connecter
 				</button>
 			</div>`;
@@ -527,3 +526,4 @@ document.addEventListener('DOMContentLoaded', function() {
 
 window.updateUI = updateUI;
 window.checkAuthStatus = checkAuthStatus;
+window.hashPassword = hashPassword;

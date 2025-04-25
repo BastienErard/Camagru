@@ -177,9 +177,10 @@ async function toggleCamera()
 
 			video.style.display = 'block';
 
-			// Réinitialise l'input file
+			const uploadLabel = document.querySelector('label[for="imageUpload"]');
+			if (uploadLabel && uploadLabel.childNodes.length > 0)
+			  uploadLabel.childNodes[0].nodeValue = 'Ou télécharger une image ';
 			imageUpload.value = '';
-			document.querySelector('label[for="imageUpload"]').textContent = 'Ou télécharger une image';
 
 			createGifCheckbox.disabled = false;
 		}
